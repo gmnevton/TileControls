@@ -33,7 +33,7 @@ This is pre-alfa stage of construction.
     - changable background,
     - glyph that can be positioned and sized,
     - caption, that can be displayed in connection with glyph,
-    - 4 corners texts, that can be positioned anywhere, customised,
+    - 4 corners texts, that can be positioned anywhere, customized,
     - other visual components on them,
     - 4 defined sizes (Small, Regular, Large, ExtraLarge),
     - custom size defined by SizeCustomCols / SizeCustomRows fields, that can be set to Fixed.
