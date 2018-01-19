@@ -25,18 +25,18 @@ https://github.com/gmnevton/TilesBoxControl
 This is pre-alfa stage of construction.
 
 ### Concepts:
-  - make TScrollBox-like visual component: TTilesBoxControl, 
+  - [x] make TScrollBox-like visual component: TTilesBoxControl, 
     that can accept other controls (of one acceptable type: TCustomTileControl),
-  - implement auto positioning of tiles,
-  - implement manual positioning of tiles,
+  - [x] implement auto positioning of tiles,
+  - [ ] implement manual positioning of tiles,
   - tiles can have:
-    - changable background,
-    - glyph that can be positioned and sized,
-    - caption, that can be displayed in connection with glyph,
-    - 4 corners texts, that can be positioned anywhere, customized,
-    - other visual components on them,
-    - 4 defined sizes (Small, Regular, Large, ExtraLarge),
-    - custom size defined by SizeCustomCols / SizeCustomRows fields, that can be set to Fixed.
-  - whole component is grid based (auto-calculated).
+    - [x] changable background,
+    - [x] glyph that can be positioned and sized,
+    - [x] caption, that can be displayed in connection with glyph,
+    - [x] 4 corners texts, that can be positioned anywhere, customized,
+    - [x] other visual components on them,
+    - [x] 4 defined sizes (Small, Regular, Large, ExtraLarge),
+    - [x] custom size defined by SizeCustomCols / SizeCustomRows fields, that can be set to Fixed.
+  - [x] whole component is grid based (auto-calculated).
 
 [sneak peek](./tiles_box_control_alfa.png)
