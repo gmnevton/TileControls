@@ -40,3 +40,5 @@ This is pre-alfa stage of construction.
   - [x] whole component is grid based (auto-calculated).
 
 [sneak peek](./tiles_box_control_alfa.png)
+
+[sneak peek 2 - completion showing](./tiles_box_control_alfa_2.png)
