@@ -1,5 +1,5 @@
 # TilesBoxControl
-Delphi 2010+ Windows 10 like TilesBoxControl VCL Component
+Delphi 2010+ Windows 10 like Tiles Box Control VCL Component
 
 https://github.com/gmnevton/TilesBoxControl
 
