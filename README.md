@@ -39,6 +39,6 @@ This is pre-alfa stage of construction.
     - [x] custom size defined by SizeCustomCols / SizeCustomRows fields, that can be set to Fixed.
   - [x] whole component is grid based (auto-calculated).
 
-[sneak peek](./tiles_box_control_alfa.png)
+![tiles_box_control_alfa](./tiles_box_control_alfa.png "sneak peek")
 
-[sneak peek 2 - completion showing](./tiles_box_control_alfa_2.png)
+![tiles_box_control_alfa_2](./tiles_box_control_alfa_2.png "sneak peek 2 - completion showing")
