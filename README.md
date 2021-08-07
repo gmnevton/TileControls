@@ -1,15 +1,14 @@
-# TilesBoxControl
-Delphi 2010+ Windows 10 like Tiles Box Control VCL Component
+# TileControls
+Delphi 2010+ Windows 10 like Tile Controls VCL
 
-https://github.com/gmnevton/TilesBoxControl
+https://github.com/gmnevton/TileControls
 
 ```
-  (c) Copyrights 2017-2018 Grzegorz Molenda aka NevTon <gmnevton@gmail.com>
+  (c) Copyrights 2017-2021 Grzegorz Molenda aka NevTon <gmnevton@gmail.com>
   
   This software source is free and can be used for any needs. 
   The introduction of any changes and the use of those changed sources is permitted without limitations. 
   Only requirement: This README text must be present without changes in all modifications of sources.
-```  
 
   > The contents of this file are used with permission, 
   > subject to the Mozilla Public License Version 2.0 (the "License"). 
@@ -19,6 +18,8 @@ https://github.com/gmnevton/TilesBoxControl
   > Software distributed under the License is distributed on an "AS IS" basis, 
   > WITHOUT WARRANTY OF ANY KIND, either express or implied. 
   > See the License for the specific language governing rights and limitations under the License.
+```  
+
 
 -----
 
