@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{6A606BD7-6F49-4B0D-85D6-9F7E64F5FFC3}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="TileControls\TileControls.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="TileControls\Demo\TilesDemo.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="TileControls">
+        <MSBuild Projects="TileControls\TileControls.dproj"/>
+    </Target>
+    <Target Name="TileControls:Clean">
+        <MSBuild Projects="TileControls\TileControls.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TileControls:Make">
+        <MSBuild Projects="TileControls\TileControls.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TilesDemo">
+        <MSBuild Projects="TileControls\Demo\TilesDemo.dproj"/>
+    </Target>
+    <Target Name="TilesDemo:Clean">
+        <MSBuild Projects="TileControls\Demo\TilesDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TilesDemo:Make">
+        <MSBuild Projects="TileControls\Demo\TilesDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="TileControls;TilesDemo"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="TileControls:Clean;TilesDemo:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="TileControls:Make;TilesDemo:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

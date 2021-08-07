@@ -1,9 +1,0 @@
-This is 2nd generation of this project.
-Because we encountered issues with previous design, we've changed our concepts all together.
-
-Now there is one container, that is base for non-windowed controls, which are placed on it.
-Controls are heavely redesigned, to be drawn on the base container.
-All events are processed by base container and distributed to controls accordingly.
-
-Wait until all code is good enough to be published, 
-to have Windows 10 start menu looking like component in Your Delphi application for free.

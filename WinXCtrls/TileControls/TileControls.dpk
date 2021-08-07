@@ -1,7 +1,7 @@
-package TilesBox;
+package TileControls;
 
 {$R *.res}
-{$R 'TilesBox.dcr'}
+{$R 'TileControls.dcr'}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
@@ -26,17 +26,21 @@ package TilesBox;
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Windows 10 like TilesBoxControl Component VCL'}
-{$LIBSUFFIX '_x86'}
+{$DESCRIPTION 'Windows 10 like tile controls VCL'}
 {$IMPLICITBUILD OFF}
 
 requires
   vcl,
+  designide,
   rtl,
-  vclimg,
-  vclactnband;
+  vclimg;
 
 contains
-  TilesBoxControl in 'TilesBoxControl.pas';
+  TileControls_Register in 'TileControls_Register.pas',
+  TileTypes in 'TileTypes.pas',
+  TileUtils in 'TileUtils.pas',
+  TileBox in 'TileBox.pas',
+  TileControl in 'TileControl.pas',
+  TileControlDrag in 'TileControlDrag.pas';
 
 end.
