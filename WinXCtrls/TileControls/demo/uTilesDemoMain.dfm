@@ -997,13 +997,12 @@ object Form1: TForm1
       Top = 24
       Width = 100
       Height = 100
-      Alignment = taLeftJustify
-      VerticalAlignment = taAlignTop
       Text1.Font.Charset = DEFAULT_CHARSET
       Text1.Font.Color = clWindowText
       Text1.Font.Height = -11
       Text1.Font.Name = 'Tahoma'
       Text1.Font.Style = []
+      Text1.Value = 'test'
       Text2.Font.Charset = DEFAULT_CHARSET
       Text2.Font.Color = clWindowText
       Text2.Font.Height = -11
@@ -1019,6 +1018,8 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = True
+      Caption = 'First Tile'
       Color = clRed
       ParentColor = False
     end
@@ -1050,6 +1051,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clLime
       ParentColor = False
     end
@@ -1081,6 +1083,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clYellow
       ParentColor = False
     end
@@ -1112,6 +1115,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1143,6 +1147,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clFuchsia
       ParentColor = False
     end
@@ -1174,6 +1179,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clAqua
       ParentColor = False
     end
@@ -1204,6 +1210,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clWhite
       ParentColor = False
     end
@@ -1235,6 +1242,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clMoneyGreen
       ParentColor = False
     end
@@ -1268,6 +1276,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clGray
       ParentColor = False
     end
@@ -1299,6 +1308,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1330,6 +1340,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1361,6 +1372,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1392,6 +1404,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1423,6 +1436,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1454,6 +1468,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1485,6 +1500,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1516,6 +1532,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1547,6 +1564,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1578,6 +1596,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1609,6 +1628,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1640,6 +1660,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -1671,6 +1692,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1702,6 +1724,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1733,6 +1756,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1764,6 +1788,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1795,6 +1820,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1826,6 +1852,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1857,6 +1884,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1888,6 +1916,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1919,6 +1948,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1950,6 +1980,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -1981,6 +2012,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2012,6 +2044,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2043,6 +2076,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2074,6 +2108,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2105,6 +2140,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2136,6 +2172,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2167,6 +2204,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2198,6 +2236,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2229,6 +2268,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2260,6 +2300,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2291,6 +2332,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2322,6 +2364,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2353,6 +2396,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2384,6 +2428,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2415,6 +2460,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2446,6 +2492,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2477,6 +2524,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2508,6 +2556,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2539,6 +2588,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2570,6 +2620,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2601,6 +2652,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2632,6 +2684,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2663,6 +2716,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2694,6 +2748,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2725,6 +2780,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2756,6 +2812,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2787,6 +2844,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2818,6 +2876,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2849,6 +2908,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2880,6 +2940,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = 4227327
       ParentColor = False
     end
@@ -2911,6 +2972,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2942,6 +3004,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -2973,6 +3036,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3004,6 +3068,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3035,6 +3100,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3066,6 +3132,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3097,6 +3164,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3128,6 +3196,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3159,6 +3228,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3190,6 +3260,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3221,6 +3292,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3252,6 +3324,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3283,6 +3356,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3314,6 +3388,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3345,6 +3420,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3376,6 +3452,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3407,6 +3484,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3438,6 +3516,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3469,6 +3548,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end
@@ -3500,6 +3580,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
+      Transparent = False
       Color = clBlue
       ParentColor = False
     end

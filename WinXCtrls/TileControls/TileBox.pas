@@ -2127,7 +2127,7 @@ var
   function HeightOfText(ACanvas: TCanvas; AText: String; var ARect: TRect; HAlignment: TAlignment; const VAlignment: TVerticalAlignment; WordWrap: Boolean; CanDraw: Boolean = False): Integer;
   const
     HAlignments: Array[TAlignment] of LongWord = (DT_LEFT, DT_RIGHT, DT_CENTER);
-    VAlignments: array[TVerticalAlignment] of Longint = (DT_TOP, DT_BOTTOM, DT_VCENTER);
+    VAlignments: array[TVerticalAlignment] of LongWord = (DT_TOP, DT_BOTTOM, DT_VCENTER);
     WordWrapOrNot: Array[Boolean] of LongWord = (DT_SINGLELINE, DT_WORDBREAK);
     DrawOrNot: Array[Boolean] of LongWord = (DT_CALCRECT, 0);
   var
@@ -3253,7 +3253,7 @@ begin
 //  LControlState:=Self.ControlState;
 //  Exclude(LControlState, csPrintClient);
 //  Self.ControlState:=LControlState;
-  Message.Result:=1;
+//  Message.Result:=1;
   inherited;
 end;
 

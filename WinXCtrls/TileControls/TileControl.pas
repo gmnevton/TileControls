@@ -5,6 +5,7 @@ interface
 uses
   SysUtils,
   Windows,
+  Messages,
   Classes,
   Controls,
   Types,
@@ -127,6 +128,7 @@ type
     FText4: TTileText;
     FWordWrap: Boolean;
     FHovered: Boolean;
+    FTransparent: Boolean;
     FOnPaint: TTilePaintEvent;
     FLastLMouseClick: TPoint;
     FLMouseClicked: Boolean;
@@ -144,8 +146,10 @@ type
     procedure SetText4(const Value: TTileText);
     procedure SetWordWrap(const Value: Boolean);
     procedure SetHovered(const Value: Boolean);
+    procedure SetTransparent(const Value: Boolean);
     procedure SetManualUserPosition;
-    procedure CMControlListChanging(var Message: TCMControlListChanging); message CM_CONTROLLISTCHANGING;
+    procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
+    procedure CMControlListChanging(var Msg: TCMControlListChanging); message CM_CONTROLLISTCHANGING;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
@@ -159,7 +163,7 @@ type
     procedure Paint; override;
     procedure PaintTo(DC: HDC; X, Y: Integer); overload;
     procedure PaintTo(Canvas: TCanvas; X, Y: Integer); overload;
-public
+  public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 //    procedure SetBounds(ALeft, ATop, AWidth, AHeight: Integer); override;
@@ -179,6 +183,7 @@ public
     property Text4: TTileText read FText4 write SetText4;
     property WordWrap: Boolean read FWordWrap write SetWordWrap default False;
     property Hovered: Boolean read FHovered write SetHovered default False;
+    property Transparent: Boolean read FTransparent write SetTransparent;
     property OnClick;
     property OnDblClick;
     property OnMouseDown;
@@ -205,7 +210,6 @@ public
 implementation
 
 uses
-  Messages,
   TileTypes,
   TileBox,
   TileControlDrag;
@@ -489,12 +493,13 @@ constructor TCustomTileControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  ControlStyle:=ControlStyle + [csOpaque, csDisplayDragImage] - [csSetCaption] - [csParentBackground];
+  ControlStyle:=ControlStyle + [csOpaque, csDisplayDragImage, csReplicatable] - [{csOpaque,} csSetCaption, csParentBackground];
   Caption:='';
-  //Alignment:=taCenter;
-  //VerticalAlignment:=taVerticalCenter;
   Color:=clWebTurquoise;
   DragCursor:=crDefault;
+
+  FAlignment:=taCenter;
+  FVerticalAlignment:=taVerticalCenter;
   FSize:=tsRegular;
   FSizeCustomCols:=2;
   FSizeCustomRows:=2;
@@ -628,37 +633,43 @@ procedure TCustomTileControl.Paint;
 var
   LBuffer: TBitmap;
   LCanvas: TCanvas;
-  LBrushStyle: TBrushStyle;
+//  LBrushStyle: TBrushStyle;
 begin
-  if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then begin
-    LBuffer:=Nil; // satisfy compiler
-    if Parent.DoubleBuffered then begin
-      LBuffer:=TBitmap.Create;
-      LBuffer.PixelFormat:=pf32bit; // 4 bytes of color information
-      LBuffer.SetSize(Width, Height);
-      LCanvas:=LBuffer.Canvas;
-      LCanvas.Brush.Assign(Self.Canvas.Brush);
-      LCanvas.Pen.Assign(Self.Canvas.Pen);
-      LCanvas.Font.Assign(Self.Canvas.Font);
-      LCanvas.CopyMode:=Self.Canvas.CopyMode;
-      LCanvas.Brush.Color:=Self.Color;
-      LBrushStyle:=LCanvas.Brush.Style;
+  LBuffer:=Nil; // satisfy compiler
+  LCanvas:=Self.Canvas;
+  if Parent.DoubleBuffered then begin
+    LBuffer:=TBitmap.Create;
+    LBuffer.PixelFormat:=pf32bit; // 4 bytes of color information
+    LBuffer.SetSize(Width, Height);
+    //
+    LCanvas:=LBuffer.Canvas;
+    LCanvas.Brush.Assign(Self.Canvas.Brush);
+    LCanvas.Pen.Assign(Self.Canvas.Pen);
+    LCanvas.Font.Assign(Self.Canvas.Font);
+    LCanvas.CopyMode:=Self.Canvas.CopyMode;
+  end;
+  try
+    LCanvas.Brush.Style:=bsClear;
+    if not Transparent then begin
+//      LBrushStyle:=LCanvas.Brush.Style;
       try
         LCanvas.Brush.Style:=bsSolid;
+        if Enabled then
+          LCanvas.Brush.Color:=Self.Color
+        else
+          LCanvas.Brush.Color:=clGray;
         LCanvas.FillRect(Rect(0, 0, Width, Height));
       finally
-        LCanvas.Brush.Style:=LBrushStyle;
+//        LCanvas.Brush.Style:=LBrushStyle;
+        LCanvas.Brush.Style:=bsClear;
       end;
-    end
-    else
-      LCanvas:=Self.Canvas;
-    try
+    end;
+    if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then
       OnPaint(Self, LCanvas, Self.ClientRect)
-    finally
-      if Parent.DoubleBuffered then begin
-        Self.Canvas.Draw(Self.ClientRect.Left, Self.ClientRect.Top, LBuffer);
-        LBuffer.Free;
-      end;
+  finally
+    if Parent.DoubleBuffered then begin
+      Self.Canvas.Draw(Self.ClientRect.Left, Self.ClientRect.Top, LBuffer);
+      LBuffer.Free;
     end;
   end;
 //  else
@@ -810,6 +821,14 @@ begin
   end;
 end;
 
+procedure TCustomTileControl.SetTransparent(const Value: Boolean);
+begin
+  if FTransparent <> Value then begin
+    FTransparent:=Value;
+    Invalidate;
+  end;
+end;
+
 procedure TCustomTileControl.SetManualUserPosition;
 var
   idx: Integer;
@@ -819,13 +838,21 @@ begin
     TTileBox(Parent).ControlsCollection.Items[idx].FUserPosition:=True;
 end;
 
-procedure TCustomTileControl.CMControlListChanging(var Message: TCMControlListChanging);
+procedure TCustomTileControl.WMEraseBkgnd(var Msg: TWmEraseBkgnd);
 begin
-  if Message.Inserting and
-     (TControl(Message.ControlListItem^.Parent) = TControl(Self)) and
-     (Message.ControlListItem^.Control <> Nil) and (Message.ControlListItem^.Control is TCustomTileControl) then begin
-    Message.ControlListItem^.Parent:=Self.Parent;
-    Message.ControlListItem^.Control.Parent:=Self.Parent;
+  if Transparent then
+    Msg.Result:=1
+  else
+    inherited;
+end;
+
+procedure TCustomTileControl.CMControlListChanging(var Msg: TCMControlListChanging);
+begin
+  if Msg.Inserting and
+     (TControl(Msg.ControlListItem^.Parent) = TControl(Self)) and
+     (Msg.ControlListItem^.Control <> Nil) and (Msg.ControlListItem^.Control is TCustomTileControl) then begin
+    Msg.ControlListItem^.Parent:=Self.Parent;
+    Msg.ControlListItem^.Control.Parent:=Self.Parent;
     Exit;
   end;
   inherited;

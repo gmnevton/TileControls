@@ -1,9 +1,6 @@
 program TilesDemo;
 
 uses
-  madExcept,
-  madLinkDisAsm,
-  madListModules,
   Forms,
   uTilesDemoMain in 'uTilesDemoMain.pas' {Form1};
 
