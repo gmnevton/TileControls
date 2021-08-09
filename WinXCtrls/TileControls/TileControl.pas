@@ -634,6 +634,24 @@ var
   LBuffer: TBitmap;
   LCanvas: TCanvas;
 //  LBrushStyle: TBrushStyle;
+
+  procedure FullRepaint;
+  var
+    R: TRect;
+  Begin
+    R:=GetClientRect;
+    //AdjustClientRect(R);
+//      LBrushStyle:=LCanvas.Brush.Style;
+    LCanvas.Brush.Style:=bsSolid;
+    if Enabled then
+      LCanvas.Brush.Color:=Self.Color
+    else
+      LCanvas.Brush.Color:=clGray;
+    LCanvas.FillRect(R);
+//    LCanvas.Brush.Style:=LBrushStyle;
+    LCanvas.Brush.Style:=bsClear;
+  end;
+
 begin
   LBuffer:=Nil; // satisfy compiler
   LCanvas:=Self.Canvas;
@@ -650,19 +668,18 @@ begin
   end;
   try
     LCanvas.Brush.Style:=bsClear;
-    if not Transparent then begin
-//      LBrushStyle:=LCanvas.Brush.Style;
-      try
-        LCanvas.Brush.Style:=bsSolid;
-        if Enabled then
-          LCanvas.Brush.Color:=Self.Color
+    if not Transparent then
+      FullRepaint
+    else begin
+      if Assigned(Parent) and Enabled then begin
+        { Get the parent to draw its background into the control's background. }
+        if Parent.DoubleBuffered then
+          PerformEraseBackground(Self, LCanvas.Handle)
         else
-          LCanvas.Brush.Color:=clGray;
-        LCanvas.FillRect(Rect(0, 0, Width, Height));
-      finally
-//        LCanvas.Brush.Style:=LBrushStyle;
-        LCanvas.Brush.Style:=bsClear;
-      end;
+          FullRepaint;
+      end
+      else
+        FullRepaint;
     end;
     if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then
       OnPaint(Self, LCanvas, Self.ClientRect)

@@ -997,6 +997,8 @@ object Form1: TForm1
       Top = 24
       Width = 100
       Height = 100
+      Alignment = taLeftJustify
+      VerticalAlignment = taAlignTop
       Text1.Font.Charset = DEFAULT_CHARSET
       Text1.Font.Color = clWindowText
       Text1.Font.Height = -11
@@ -1018,7 +1020,7 @@ object Form1: TForm1
       Text4.Font.Height = -11
       Text4.Font.Name = 'Tahoma'
       Text4.Font.Style = []
-      Transparent = True
+      Transparent = False
       Caption = 'First Tile'
       Color = clRed
       ParentColor = False
