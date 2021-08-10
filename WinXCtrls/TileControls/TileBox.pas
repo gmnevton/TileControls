@@ -2473,8 +2473,8 @@ begin
   with TargetCanvas do begin
     //Lock;// already locked by TCustomControl.PaintWindow(DC: HDC);
     //try
+      text_rect:=TargetControl.ClientRect;
       if (IcoWidth > 0) and (IcoHeight > 0) then begin
-        text_rect:=TargetControl.ClientRect;
         InflateRect(text_rect, -2, -2);
         if (TargetControl.Glyph.AlignWithCaption > gacNone) and (CaptionText <> '') then begin
           Font.Assign(TargetControl.Font);

@@ -997,8 +997,6 @@ object Form1: TForm1
       Top = 24
       Width = 100
       Height = 100
-      Alignment = taLeftJustify
-      VerticalAlignment = taAlignTop
       Text1.Font.Charset = DEFAULT_CHARSET
       Text1.Font.Color = clWindowText
       Text1.Font.Height = -11

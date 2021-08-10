@@ -493,7 +493,7 @@ constructor TCustomTileControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  ControlStyle:=ControlStyle + [csOpaque, csDisplayDragImage, csReplicatable] - [{csOpaque,} csSetCaption, csParentBackground];
+  ControlStyle:=ControlStyle + [{csOpaque,} csDisplayDragImage, csReplicatable] - [csOpaque, csSetCaption, csParentBackground];
   Caption:='';
   Color:=clWebTurquoise;
   DragCursor:=crDefault;
@@ -674,9 +674,9 @@ begin
       if Assigned(Parent) and Enabled then begin
         { Get the parent to draw its background into the control's background. }
         if Parent.DoubleBuffered then
-          PerformEraseBackground(Self, LCanvas.Handle)
-        else
-          FullRepaint;
+          PerformEraseBackground(Self, LCanvas.Handle);
+//        else
+//          FullRepaint;
       end
       else
         FullRepaint;
