@@ -964,14 +964,10 @@ begin
 //        Position:=Control.BoundsRect.TopLeft;
         Position:=Items[before].Position;
       end;
-      if (Control <> Nil) then begin
+      Size1:=Point(0, 0);
+      if Control <> Nil then
         Owner.CalculateControlSize(Control, ParentRect, Size1);
-        Owner.CalculateControlSize(ATileControl, ParentRect, Size2);
-      end
-      else begin
-        Size1:=Point(0, 0);
-        Owner.CalculateControlSize(ATileControl, ParentRect, Size2);
-      end;
+      Owner.CalculateControlSize(ATileControl, ParentRect, Size2);
 
       if Owner.Orientation = sbVertical then begin
         if cellsToSize(Position.X + Size1.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
