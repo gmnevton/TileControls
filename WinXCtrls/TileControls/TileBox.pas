@@ -113,6 +113,7 @@ type
     procedure Added(var Item: TCollectionItem); override;
     procedure Deleting(Item: TCollectionItem); override;
 
+    procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
     function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
     function GetVerticalPos(const StartPoint: TPoint): TPoint;
@@ -1020,7 +1021,7 @@ begin
           TempPosition:=Point(Position.X + Size1.X + Size2.X, Position.Y);
 //          go_once:=True;
 //          go_twice:=True;
-          TempPosition:=GetHorizontalCell(TempPosition, );
+          TempPosition:=GetHorizontalPos(TempPosition, ParentRect, Size2);
           Position:=TempPosition;
         end
         else if before > -1 then begin
