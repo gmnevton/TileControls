@@ -113,6 +113,9 @@ type
     procedure Added(var Item: TCollectionItem); override;
     procedure Deleting(Item: TCollectionItem); override;
 
+    function cellsToSize(const cels, spacer: Integer): Integer; inline;
+    function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
+    function GetVerticalPos(const StartPoint: TPoint): TPoint;
     procedure GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
   public
     constructor Create(AOwner: TPersistent);
@@ -779,81 +782,79 @@ begin
 //  SizeY:=0;
 end;
 
-procedure TTileControlsCollection.GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
+procedure TTileControlsCollection.findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
+var
+  x, y, a, b, k, first_empty: Integer;
+  found: Boolean;
 
-  procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
-  var
-    x, y, a, b, k, first_empty: Integer;
-    found: Boolean;
-
-    procedure adjustPosition;
-    begin
-      if Orientation = sbHorizontal then
-        Inc(x, 1)
-      else
-        Inc(y, 1);
-      // zostawiam to na wszelki wypadek
+  procedure adjustPosition;
+  begin
+    if Orientation = sbHorizontal then
+      Inc(x, 1)
+    else
+      Inc(y, 1);
+    // zostawiam to na wszelki wypadek
 {
-      case ATileControl.Size of
-        tsSmall: begin
-          if Orientation = sbHorizontal then
-            Inc(x, 1)
-          else
-            Inc(y, 1);
-        end;
-        tsRegular: begin
-          if Orientation = sbHorizontal then
-            Inc(x, 2)
-          else
-            Inc(y, 2);
-        end;
-        tsLarge: begin
-          if Orientation = sbHorizontal then
-            Inc(x, 2)
-          else
-            Inc(y, 2);
-        end;
-        tsExtraLarge: begin
-          if Orientation = sbHorizontal then
-            Inc(x, 4)
-          else
-            Inc(y, 4);
-        end;
-        //tsCustom    : y:=Position.Y + 1;
+    case ATileControl.Size of
+      tsSmall: begin
+        if Orientation = sbHorizontal then
+          Inc(x, 1)
+        else
+          Inc(y, 1);
       end;
-}
+      tsRegular: begin
+        if Orientation = sbHorizontal then
+          Inc(x, 2)
+        else
+          Inc(y, 2);
+      end;
+      tsLarge: begin
+        if Orientation = sbHorizontal then
+          Inc(x, 2)
+        else
+          Inc(y, 2);
+      end;
+      tsExtraLarge: begin
+        if Orientation = sbHorizontal then
+          Inc(x, 4)
+        else
+          Inc(y, 4);
+      end;
+      //tsCustom    : y:=Position.Y + 1;
     end;
+}
+  end;
 
-    function iterateItems(const posx, posy: Integer): Boolean;
-    var
-      i: Integer;
-      LPos, LSize: TPoint;
-      LResult: Boolean;
-      LRect: TRect;
-    begin
-      Result:=False;
-      for i:=0 to Count - 1 do begin
-        LPos:=Items[i].Position;
-        if PointsEqual(LPos, EmptyPoint) then
-          Continue;
-        Owner.CalculateControlSize(Items[i].TileControl, ParentRect, LSize);
+  function iterateItems(const posx, posy: Integer): Boolean;
+  var
+    i: Integer;
+    LPos, LSize: TPoint;
+    LResult: Boolean;
+    LRect: TRect;
+  begin
+    Result:=False;
+    for i:=0 to Count - 1 do begin
+      LPos:=Items[i].Position;
+      if PointsEqual(LPos, EmptyPoint) then
+        Continue;
+      Owner.CalculateControlSize(Items[i].TileControl, ParentRect, LSize);
 //        if PtInRect(Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Point(posx, posy)) then begin
-        LResult:=IntersectRect(LRect, Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Rect(posx, posy, posx + TargetSize.X, posy + TargetSize.Y));
-        if LResult then begin
+      LResult:=IntersectRect(LRect, Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Rect(posx, posy, posx + TargetSize.X, posy + TargetSize.Y));
+      if LResult then begin
 //        if ((posx >= Items[i].Position.X) and (posx <= Items[i].Position.X + Size.X)) and
 //           ((posy >= Items[i].Position.Y) and (posy <= Items[i].Position.Y + Size.Y)) then begin
-          Result:=True;
-          Break;
-        end;
+        Result:=True;
+        Break;
       end;
     end;
+  end;
 
-  var
-    last_enter: DWORD;
-    expired: Boolean;
-  begin
-    x:=TargetPosition.X;
-    y:=TargetPosition.Y;
+var
+  last_enter: DWORD;
+  expired: Boolean;
+begin
+  x:=TargetPosition.X;
+  y:=TargetPosition.Y;
 //    if Orientation = sbHorizontal then begin
 //      x:=TargetPosition.X;
 //      y:=TargetPosition.Y;
@@ -863,50 +864,25 @@ procedure TTileControlsCollection.GetDefaultPosition(const ATileControl: TCustom
 //      y:=TargetPosition.Y;
 //    end;
 
-    last_enter:=GetTickCount;
-    repeat
-      try
-        adjustPosition;
-        first_empty:=-1;
-        if Orientation = sbHorizontal then begin
-          a:=x;
-          b:=Owner.ColCount;
-          if b <= 0 then
-            Exit;
-        end
-        else begin
-          a:=y;
-          b:=Owner.RowCount;
-          if b <= 0 then
-            Exit;
-        end;
-        if a > (b - 1) then begin
-          if not canChangeOrientation then begin
-            if Orientation = sbHorizontal then begin
-              x:=-1;
-              Inc(y);
-            end
-            else begin
-              Inc(x);
-              y:=-1;
-            end;
-            Continue;
-          end;
-          first_empty:=a - 1;
-          Break;
-        end;
-        // szukaj wolnego miejsca
-        for k:=a to b - 1 do begin
-          if Orientation = sbHorizontal then
-            found:=iterateItems(k, y)
-          else
-            found:=iterateItems(x, k);
-          if not found then begin
-            first_empty:=k;
-            Break;
-          end;
-        end;
-        if (first_empty = -1) and canChangeOrientation then begin
+  last_enter:=GetTickCount;
+  repeat
+    try
+      adjustPosition;
+      first_empty:=-1;
+      if Orientation = sbHorizontal then begin
+        a:=x;
+        b:=Owner.ColCount;
+        if b <= 0 then
+          Exit;
+      end
+      else begin
+        a:=y;
+        b:=Owner.RowCount;
+        if b <= 0 then
+          Exit;
+      end;
+      if a > (b - 1) then begin
+        if not canChangeOrientation then begin
           if Orientation = sbHorizontal then begin
             x:=-1;
             Inc(y);
@@ -915,30 +891,99 @@ procedure TTileControlsCollection.GetDefaultPosition(const ATileControl: TCustom
             Inc(x);
             y:=-1;
           end;
+          Continue;
         end;
-      finally
-        expired:=(GetTickDiff(last_enter, GetTickCount) >= 5000);
+        first_empty:=a - 1;
+        Break;
       end;
-    until (first_empty > -1) or expired;
-
-    if expired then
-      Exit;
-
-    if Orientation = sbHorizontal then begin
-      TargetPosition.X:=first_empty;
-      TargetPosition.Y:=y;
-    end
-    else begin
-      TargetPosition.X:=x;
-      TargetPosition.Y:=first_empty;
+      // szukaj wolnego miejsca
+      for k:=a to b - 1 do begin
+        if Orientation = sbHorizontal then
+          found:=iterateItems(k, y)
+        else
+          found:=iterateItems(x, k);
+        if not found then begin
+          first_empty:=k;
+          Break;
+        end;
+      end;
+      if (first_empty = -1) and canChangeOrientation then begin
+        if Orientation = sbHorizontal then begin
+          x:=-1;
+          Inc(y);
+        end
+        else begin
+          Inc(x);
+          y:=-1;
+        end;
+      end;
+    finally
+      expired:=(GetTickDiff(last_enter, GetTickCount) >= 5000);
     end;
-  end;
+  until (first_empty > -1) or expired;
 
-  function cellsToSize(const cels, spacer: Integer): Integer;
-  begin
-    Result:=48 * cels + spacer * cels;
-  end;
+  if expired then
+    Exit;
 
+  if Orientation = sbHorizontal then begin
+    TargetPosition.X:=first_empty;
+    TargetPosition.Y:=y;
+  end
+  else begin
+    TargetPosition.X:=x;
+    TargetPosition.Y:=first_empty;
+  end;
+end;
+
+function TTileControlsCollection.cellsToSize(const cels, spacer: Integer): Integer;
+begin
+  Result:=(48 + spacer) * cels;
+end;
+
+function TTileControlsCollection.GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
+begin
+  Result:=StartPoint;
+  while True do begin
+    findEmptySlot(sbHorizontal, HostRect, Result, TileSize);
+    if cellsToSize(Result.X + TileSize.X, Owner.Spacer) > HostRect.Right then begin
+      // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
+      if (Owner.ColCount >= TileSize.X) and (Result.X > 0) then begin
+        Result.X:=-1;
+        Inc(Result.Y);
+      end
+      else begin
+        if Result.X = 0 then begin
+          Break;
+        end
+        else begin
+          if (Owner.ColCount > 0) and (Owner.ColCount < TileSize.X) then begin
+            Result.X:=-1;
+            Inc(Result.Y);
+          end
+          else begin
+            Result.X:=0;
+            Break;
+          end;
+        end;
+      end;
+//              findEmptySlot(sbHorizontal, HostRect, Result, TileSize);
+//              if not go_once then
+//                go_twice:=False;
+//              go_once:=False;
+//              if Result.X = 0 then
+//                Break;
+    end
+    else
+      Break;
+  end;
+end;
+
+function TTileControlsCollection.GetVerticalPos(const StartPoint: TPoint): TPoint;
+begin
+
+end;
+
+procedure TTileControlsCollection.GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
 var
   idx, before: Integer;
   Control: TTileControl;
@@ -975,39 +1020,7 @@ begin
           TempPosition:=Point(Position.X + Size1.X + Size2.X, Position.Y);
 //          go_once:=True;
 //          go_twice:=True;
-          while True do begin
-            findEmptySlot(sbHorizontal, ParentRect, TempPosition, Size2);
-            if cellsToSize(TempPosition.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
-              // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
-              if (Owner.ColCount >= Size2.X) and (TempPosition.X > 0) then begin
-                TempPosition.X:=-1;
-                Inc(TempPosition.Y);
-              end
-              else begin
-                if TempPosition.X = 0 then begin
-                  Break;
-                end
-                else begin
-                  if (Owner.ColCount > 0) and (Owner.ColCount < Size2.X) then begin
-                    TempPosition.X:=-1;
-                    Inc(TempPosition.Y);
-                  end
-                  else begin
-                    TempPosition.X:=0;
-                    Break;
-                  end;
-                end;
-              end;
-//              findEmptySlot(sbHorizontal, ParentRect, TempPosition, Size2);
-//              if not go_once then
-//                go_twice:=False;
-//              go_once:=False;
-//              if TempPosition.X = 0 then
-//                Break;
-            end
-            else
-              Break;
-          end;
+          TempPosition:=GetHorizontalCell(TempPosition, );
           Position:=TempPosition;
         end
         else if before > -1 then begin
