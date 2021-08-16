@@ -113,8 +113,9 @@ type
     procedure Added(var Item: TCollectionItem); override;
     procedure Deleting(Item: TCollectionItem); override;
 
-    function findEmptyCellX(): Boolean;
-    function findEmptyCellY(): Boolean;
+    function cellIsAvailable(const posx, posy: Integer): Boolean;
+    function findEmptyCellX(const X, Y: Integer; out OX, OY: Integer): Boolean;
+    function findEmptyCellY(const X, Y: Integer; out OX, OY: Integer): Boolean;
     procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
     function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
@@ -785,32 +786,6 @@ begin
 //  SizeY:=0;
 end;
 
-function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; out OX, OY: Integer): Boolean;
-var
-  a, b, k: Integer;
-  found: Boolean;
-begin
-  Result:=False;
-  OX:=X;
-  OY:=Y;
-  a:=X;
-  b:=Owner.ColCount;
-  if b <= 0 then
-    Exit;
-  if a > (b - 1) then begin
-    OX:=0;
-    Inc(OY);
-    Exit;
-  end;
-  // szukaj wolnego miejsca
-  for k:=a to b - 1 do begin
-    found:=iterateItems(k, Y);
-    if not found then begin
-      OX:=k;
-      Exit(True);
-    end;
-  end;
-end;
 {
     Inc(X, 1);
       first_empty:=-1;
@@ -865,9 +840,82 @@ end;
   until (first_empty > -1) or expired;
 }
 
-function TTileControlsCollection.findEmptyCellY: Boolean;
+function TTileControlsCollection.cellIsAvailable(const posx, posy: Integer): Boolean;
+var
+  i: Integer;
+  LPos, LSize: TPoint;
+  LResult: Boolean;
+  LRect: TRect;
 begin
+  Result:=True;
+  for i:=0 to Count - 1 do begin
+    LPos:=Items[i].Position;
+    if PointsEqual(LPos, EmptyPoint) then
+      Continue;
+    Owner.CalculateControlSize(Items[i].TileControl, ParentRect, LSize);
+//        if PtInRect(Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Point(posx, posy)) then begin
+    LResult:=IntersectRect(LRect, Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Rect(posx, posy, posx + TargetSize.X, posy + TargetSize.Y));
+    if LResult then begin
+//        if ((posx >= Items[i].Position.X) and (posx <= Items[i].Position.X + Size.X)) and
+//           ((posy >= Items[i].Position.Y) and (posy <= Items[i].Position.Y + Size.Y)) then begin
+      Result:=False;
+      Break;
+    end;
+  end;
+end;
 
+function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; out OX, OY: Integer): Boolean;
+var
+  a, b, k: Integer;
+  available: Boolean;
+begin
+  Result:=False;
+  OX:=X;
+  OY:=Y;
+  a:=X;
+  b:=Owner.ColCount;
+  if b <= 0 then
+    Exit;
+  if a > (b - 1) then begin
+    OX:=0;
+    Inc(OY);
+    Exit;
+  end;
+  // szukaj wolnego miejsca
+  for k:=a to b - 1 do begin
+    available:=cellIsAvailable(k, Y);
+    if available then begin
+      OX:=k;
+      Exit(True);
+    end;
+  end;
+end;
+
+function TTileControlsCollection.findEmptyCellY(const X, Y: Integer; out OX, OY: Integer): Boolean;
+var
+  a, b, k: Integer;
+  available: Boolean;
+begin
+  Result:=False;
+  OX:=X;
+  OY:=Y;
+  a:=X;
+  b:=Owner.RowCount;
+  if b <= 0 then
+    Exit;
+  if a > (b - 1) then begin
+    OY:=0;
+    Inc(OX);
+    Exit;
+  end;
+  // szukaj wolnego miejsca
+  for k:=a to b - 1 do begin
+    available:=cellIsAvailable(X, k);
+    if available then begin
+      OY:=k;
+      Exit(True);
+    end;
+  end;
 end;
 
 procedure TTileControlsCollection.findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
@@ -883,31 +931,7 @@ var
       Inc(y, 1);
   end;
 
-  function iterateItems(const posx, posy: Integer): Boolean;
-  var
-    i: Integer;
-    LPos, LSize: TPoint;
-    LResult: Boolean;
-    LRect: TRect;
-  begin
-    Result:=False;
-    for i:=0 to Count - 1 do begin
-      LPos:=Items[i].Position;
-      if PointsEqual(LPos, EmptyPoint) then
-        Continue;
-      Owner.CalculateControlSize(Items[i].TileControl, ParentRect, LSize);
-//        if PtInRect(Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Point(posx, posy)) then begin
-      LResult:=IntersectRect(LRect, Rect(LPos.X, LPos.Y, LPos.X + LSize.X, LPos.Y + LSize.Y), Rect(posx, posy, posx + TargetSize.X, posy + TargetSize.Y));
-      if LResult then begin
-//        if ((posx >= Items[i].Position.X) and (posx <= Items[i].Position.X + Size.X)) and
-//           ((posy >= Items[i].Position.Y) and (posy <= Items[i].Position.Y + Size.Y)) then begin
-        Result:=True;
-        Break;
-      end;
-    end;
-  end;
-
-var
+//var
 //  last_enter: DWORD;
 //  expired: Boolean;
 begin
