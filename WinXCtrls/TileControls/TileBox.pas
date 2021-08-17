@@ -113,10 +113,10 @@ type
     procedure Added(var Item: TCollectionItem); override;
     procedure Deleting(Item: TCollectionItem); override;
 
-    function cellIsAvailable(const posx, posy: Integer): Boolean;
-    function findEmptyCellX(const X, Y: Integer; out OX, OY: Integer): Boolean;
-    function findEmptyCellY(const X, Y: Integer; out OX, OY: Integer): Boolean;
-    procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
+    function cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect): Boolean;
+    function findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
+    function findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
+    procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
     function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
     function GetVerticalPos(const StartPoint: TPoint): TPoint;
@@ -840,7 +840,7 @@ end;
   until (first_empty > -1) or expired;
 }
 
-function TTileControlsCollection.cellIsAvailable(const posx, posy: Integer): Boolean;
+function TTileControlsCollection.cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect): Boolean;
 var
   i: Integer;
   LPos, LSize: TPoint;
@@ -864,7 +864,7 @@ begin
   end;
 end;
 
-function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; out OX, OY: Integer): Boolean;
+function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
 var
   a, b, k: Integer;
   available: Boolean;
@@ -883,7 +883,7 @@ begin
   end;
   // szukaj wolnego miejsca
   for k:=a to b - 1 do begin
-    available:=cellIsAvailable(k, Y);
+    available:=cellIsAvailable(k, Y, ParentRect);
     if available then begin
       OX:=k;
       Exit(True);
@@ -891,7 +891,7 @@ begin
   end;
 end;
 
-function TTileControlsCollection.findEmptyCellY(const X, Y: Integer; out OX, OY: Integer): Boolean;
+function TTileControlsCollection.findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
 var
   a, b, k: Integer;
   available: Boolean;
@@ -910,7 +910,7 @@ begin
   end;
   // szukaj wolnego miejsca
   for k:=a to b - 1 do begin
-    available:=cellIsAvailable(X, k);
+    available:=cellIsAvailable(X, k, ParentRect);
     if available then begin
       OY:=k;
       Exit(True);
@@ -918,43 +918,25 @@ begin
   end;
 end;
 
-procedure TTileControlsCollection.findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint; const canChangeOrientation: Boolean = False);
+procedure TTileControlsCollection.findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
 var
-  x, y, a, b, k, first_empty: Integer;
-  found: Boolean;
-
-  procedure adjustPosition;
-  begin
-    if Orientation = sbHorizontal then
-      Inc(x, 1)
-    else
-      Inc(y, 1);
-  end;
-
-//var
-//  last_enter: DWORD;
-//  expired: Boolean;
+  X, Y: Integer;
 begin
-  x:=TargetPosition.X;
-  y:=TargetPosition.Y;
-  if Orientation = sbHorizontal then
-    findEmptyCellX()
-  else
-    findEmptyCellY();
-
-//  last_enter:=GetTickCount;
-
-//  if expired then
-//    Exit;
-
   if Orientation = sbHorizontal then begin
-    TargetPosition.X:=first_empty;
-    TargetPosition.Y:=y;
+    if not findEmptyCellX(TargetPosition.X, TargetPosition.Y, ParentRect, X, Y) and (TargetPosition.Y < Y) then begin
+      TargetPosition.X:=X;
+      TargetPosition.Y:=Y;
+      findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
+    end;
   end
   else begin
-    TargetPosition.X:=x;
-    TargetPosition.Y:=first_empty;
+    if findEmptyCellY(TargetPosition.X, TargetPosition.Y, ParentRect, x, y) then begin
+
+    end;
   end;
+
+  TargetPosition.X:=X;
+  TargetPosition.Y:=Y;
 end;
 
 function TTileControlsCollection.cellsToSize(const cels, spacer: Integer): Integer;
