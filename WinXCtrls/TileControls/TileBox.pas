@@ -113,9 +113,9 @@ type
     procedure Added(var Item: TCollectionItem); override;
     procedure Deleting(Item: TCollectionItem); override;
 
-    function cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect): Boolean;
-    function findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
-    function findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
+    function cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect; const TargetSize: TPoint): Boolean;
+    function findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
+    function findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
     procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
     function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
@@ -840,7 +840,7 @@ end;
   until (first_empty > -1) or expired;
 }
 
-function TTileControlsCollection.cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect): Boolean;
+function TTileControlsCollection.cellIsAvailable(const posx, posy: Integer; const ParentRect: TRect; const TargetSize: TPoint): Boolean;
 var
   i: Integer;
   LPos, LSize: TPoint;
@@ -864,7 +864,7 @@ begin
   end;
 end;
 
-function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
+function TTileControlsCollection.findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
 var
   a, b, k: Integer;
   available: Boolean;
@@ -883,7 +883,7 @@ begin
   end;
   // szukaj wolnego miejsca
   for k:=a to b - 1 do begin
-    available:=cellIsAvailable(k, Y, ParentRect);
+    available:=cellIsAvailable(k, Y, ParentRect, TargetSize);
     if available then begin
       OX:=k;
       Exit(True);
@@ -891,7 +891,7 @@ begin
   end;
 end;
 
-function TTileControlsCollection.findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; out OX, OY: Integer): Boolean;
+function TTileControlsCollection.findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
 var
   a, b, k: Integer;
   available: Boolean;
@@ -910,7 +910,7 @@ begin
   end;
   // szukaj wolnego miejsca
   for k:=a to b - 1 do begin
-    available:=cellIsAvailable(X, k, ParentRect);
+    available:=cellIsAvailable(X, k, ParentRect, TargetSize);
     if available then begin
       OY:=k;
       Exit(True);
@@ -921,17 +921,32 @@ end;
 procedure TTileControlsCollection.findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
 var
   X, Y: Integer;
+  found: Boolean;
 begin
   if Orientation = sbHorizontal then begin
-    if not findEmptyCellX(TargetPosition.X, TargetPosition.Y, ParentRect, X, Y) and (TargetPosition.Y < Y) then begin
+    found:=findEmptyCellX(TargetPosition.X, TargetPosition.Y, ParentRect, TargetSize, X, Y);
+    if not found and (TargetPosition.Y < Y) then begin
       TargetPosition.X:=X;
       TargetPosition.Y:=Y;
       findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
+    end
+    else if not found and PointsEqual(TargetPosition, Point(X, Y)) then begin
+      TargetPosition.X:=0;
+      TargetPosition.Y:=0;
+      Exit;
     end;
   end
   else begin
-    if findEmptyCellY(TargetPosition.X, TargetPosition.Y, ParentRect, x, y) then begin
-
+    found:=findEmptyCellY(TargetPosition.X, TargetPosition.Y, ParentRect, TargetSize, X, Y);
+    if not found and (TargetPosition.X < X) then begin
+      TargetPosition.X:=X;
+      TargetPosition.Y:=Y;
+      findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
+    end
+    else if not found and PointsEqual(TargetPosition, Point(X, Y)) then begin
+      TargetPosition.X:=0;
+      TargetPosition.Y:=0;
+      Exit;
     end;
   end;
 
@@ -1030,8 +1045,8 @@ begin
         else if before > -1 then begin
           // sprawdzic czy pozycja jest wolna
 //          go_once:=True;
-          while True do begin
-            findEmptySlot(sbHorizontal, ParentRect, Position, Size2, True);
+{          while True do begin
+            findEmptySlot(sbHorizontal, ParentRect, Position, Size2);
             // sprawdzic czy nie przekraczamy dopuszczalnych przestrzeni
             if cellsToSize(Position.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
               // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
@@ -1061,7 +1076,8 @@ begin
             end
             else
               Break;
-          end;
+          end;}
+          Position:=GetHorizontalPos(Position, ParentRect, Size2);
         end;
       end
       else begin
