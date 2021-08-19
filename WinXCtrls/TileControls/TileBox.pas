@@ -119,7 +119,7 @@ type
     procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
     function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
-    function GetVerticalPos(const StartPoint: TPoint): TPoint;
+    function GetVerticalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
     procedure GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
   public
     constructor Create(AOwner: TPersistent);
@@ -985,21 +985,42 @@ begin
           end;
         end;
       end;
-//              findEmptySlot(sbHorizontal, HostRect, Result, TileSize);
-//              if not go_once then
-//                go_twice:=False;
-//              go_once:=False;
-//              if Result.X = 0 then
-//                Break;
     end
     else
       Break;
   end;
 end;
 
-function TTileControlsCollection.GetVerticalPos(const StartPoint: TPoint): TPoint;
+function TTileControlsCollection.GetVerticalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
 begin
-
+  Result:=StartPoint;
+  while True do begin
+    findEmptySlot(sbVertical, HostRect, Result, TileSize);
+    if cellsToSize(Result.Y + TileSize.Y, Owner.Spacer) > HostRect.Bottom then begin
+      // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
+      if (Owner.RowCount >= TileSize.Y) and (Result.Y > 0) then begin
+        Result.Y:=-1;
+        Inc(Result.X);
+      end
+      else begin
+        if Result.Y = 0 then begin
+          Break;
+        end
+        else begin
+          if (Owner.RowCount > 0) and (Owner.RowCount < TileSize.Y) then begin
+            Result.Y:=-1;
+            Inc(Result.X);
+          end
+          else begin
+            Result.Y:=0;
+            Break;
+          end;
+        end;
+      end;
+    end
+    else
+      Break;
+  end;
 end;
 
 procedure TTileControlsCollection.GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
@@ -1033,92 +1054,31 @@ begin
         Owner.CalculateControlSize(Control, ParentRect, Size1);
       Owner.CalculateControlSize(ATileControl, ParentRect, Size2);
 
+      // Owner.Orientation states the orientation of TileBox scrollability:
+      //   default sbVertical means that we can scroll up/down, so we place our tiles from left to right
+      //   and if there is no more room on the right side, then we move row down from top to bottom;
+      //   in other situation (sbHorizontal), we place tiles from top to bottom and if we cant go down any more,
+      //   than we move column right from left to right.
       if Owner.Orientation = sbVertical then begin
         if cellsToSize(Position.X + Size1.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
           // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
           TempPosition:=Point(Position.X + Size1.X + Size2.X, Position.Y);
-//          go_once:=True;
-//          go_twice:=True;
           TempPosition:=GetHorizontalPos(TempPosition, ParentRect, Size2);
           Position:=TempPosition;
         end
         else if before > -1 then begin
-          // sprawdzic czy pozycja jest wolna
-//          go_once:=True;
-{          while True do begin
-            findEmptySlot(sbHorizontal, ParentRect, Position, Size2);
-            // sprawdzic czy nie przekraczamy dopuszczalnych przestrzeni
-            if cellsToSize(Position.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
-              // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
-              if (Owner.ColCount >= Size2.X) and (Position.X > 0) then begin
-                Position.X:=-1;
-                Inc(Position.Y);
-              end
-              else begin
-                if Position.X = 0 then begin
-                  Break;
-                end
-                else begin
-                  if (Owner.ColCount > 0) and (Owner.ColCount < Size2.X) then begin
-                    Position.X:=-1;
-                    Inc(Position.Y);
-                  end
-                  else begin
-                    Position.X:=0;
-                    Break;
-                  end;
-                end;
-              end;
-//              TempPosition:=Point(Position.X + Size2.X, Position.Y);
-//              findEmptySlot(sbHorizontal, ParentRect, TempPosition, EmptyPoint);
-//              Position:=TempPosition;
-//              go_once:=False;
-            end
-            else
-              Break;
-          end;}
           Position:=GetHorizontalPos(Position, ParentRect, Size2);
         end;
       end
-      else begin
+      else begin // Owner.Orientation = sbHorizontal
         if cellsToSize(Position.Y + Size1.Y + Size2.Y, Owner.Spacer) > ParentRect.Bottom then begin
           // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
           TempPosition:=Point(Position.X, Position.Y + Size1.Y + Size2.Y);
-          go_once:=True;
-          go_twice:=True;
-          while True do begin
-            findEmptySlot(sbVertical, ParentRect, TempPosition, Size2);
-            if (cellsToSize(TempPosition.Y + Size2.Y, Owner.Spacer) > ParentRect.Bottom) and go_twice then begin
-              // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
-              findEmptySlot(sbVertical, ParentRect, TempPosition, Size2);
-              if not go_once then
-                go_twice:=False;
-              go_once:=False;
-              if TempPosition.Y = 0 then
-                Break;
-            end
-            else
-              Break;
-          end;
+          TempPosition:=GetVerticalPos(TempPosition, ParentRect, Size2);
           Position:=TempPosition;
         end
         else if before > -1 then begin
-          // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
-//          findEmptySlot(sbVertical, ParentRect, Position, Size2, True);
-          go_once:=True;
-          while True do begin
-            findEmptySlot(sbVertical, ParentRect, Position, Size2, True);
-            // sprawdzic czy nie przekraczamy dopuszczalnych przestrzeni
-            if (cellsToSize(Position.Y + Size2.Y, Owner.Spacer) > ParentRect.Bottom) and go_once then begin
-              // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
-              TempPosition:=Point(Position.X, Position.Y + Size2.Y);
-              findEmptySlot(sbVertical, ParentRect, TempPosition, EmptyPoint);
-              Position:=TempPosition;
-              go_once:=False;
-            end
-            else
-              Break;
-          end;
+          Position:=GetVerticalPos(Position, ParentRect, Size2);
         end;
       end;
 
