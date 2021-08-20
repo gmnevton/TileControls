@@ -8,6 +8,7 @@ uses
 
 function PointsAdd(const A, B: TPoint): TPoint; inline;
 function PointsDec(const A, B: TPoint): TPoint; inline;
+
 function GetTickDiff(const AOldTickCount, ANewTickCount: LongWord): LongWord; inline;
 
 procedure DrawTransparentBitmap(DC: HDC; hBmp: HBITMAP; xStart: Integer; yStart: Integer; cTransparentColor: COLORREF);

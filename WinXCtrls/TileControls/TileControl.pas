@@ -8,6 +8,7 @@ uses
   Messages,
   Classes,
   Controls,
+  ExtCtrls,
   Types,
   Graphics;
 
@@ -132,6 +133,8 @@ type
     FOnPaint: TTilePaintEvent;
     FLastLMouseClick: TPoint;
     FLMouseClicked: Boolean;
+    FWheelAccumulator: Integer;
+    FWheelTimer: TTimer;
 
     procedure SetAlignment(Value: TAlignment);
     procedure SetVerticalAlignment(const Value: TVerticalAlignment);
@@ -154,6 +157,8 @@ type
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;  MousePos: TPoint): Boolean; override;
+    procedure DoMouseScroll(Sender: TObject); virtual;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
     procedure DoStartDrag(var DragObject: TDragObject); override;
     procedure DoEndDrag(Target: TObject; X, Y: Integer); override;
@@ -210,6 +215,8 @@ type
 implementation
 
 uses
+  Forms,
+  Math,
   TileTypes,
   TileBox,
   TileControlDrag;
@@ -506,6 +513,11 @@ begin
   FSizeFixed:=True;
   FWordWrap:=False;
   FHovered:=False;
+  FWheelAccumulator:=0;
+  FWheelTimer:=TTimer.Create(Self);
+  FWheelTimer.Enabled:=False;
+  FWheelTimer.Interval:=100;
+  FWheelTimer.OnTimer:=DoMouseScroll;
 
   FGlyph:=TTileGlyph.Create(Self);
   FText1:=TTileText.Create(Self);
@@ -516,6 +528,8 @@ end;
 
 destructor TCustomTileControl.Destroy;
 begin
+  FWheelTimer.Enabled:=False;
+  FreeAndNil(FWheelTimer);
   FreeAndNil(FText4);
   FreeAndNil(FText3);
   FreeAndNil(FText2);
@@ -550,6 +564,59 @@ begin
     FLMouseClicked:=False;
   end;
   inherited;
+end;
+
+function TCustomTileControl.DoMouseWheel(Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint): Boolean;
+var
+  IsNeg: Boolean;
+begin
+  Result := True;
+  if not TTileBoxAccess(Owner).HorzScrollBar.IsScrollBarVisible and not TTileBoxAccess(Owner).VertScrollBar.IsScrollBarVisible then
+    Exit(False);
+  Inc(FWheelAccumulator, WheelDelta); // this is threadsafe operation; according to Delphi help
+  // run some timer, to enable async scrolling
+  FWheelTimer.Enabled:=True;
+end;
+
+procedure TCustomTileControl.DoMouseScroll(Sender: TObject);
+var
+  IsNeg: Boolean;
+  XScroll, YScroll: Integer;
+begin
+  FWheelTimer.Enabled:=False;
+  XScroll:=GetSystemMetrics(SM_CXHSCROLL);
+  YScroll:=GetSystemMetrics(SM_CYVSCROLL);
+  try
+    if Abs(FWheelAccumulator) >= WHEEL_DELTA then begin
+      IsNeg := FWheelAccumulator < 0;
+      if IsNeg then begin
+        Inc(FWheelAccumulator, WHEEL_DELTA);
+        if TTileBoxAccess(Owner).Orientation = sbVertical then begin
+          XScroll:=IfThen(TTileBoxAccess(Owner).UseRightToLeftScrollBar, XScroll, -XScroll);
+          YScroll:=0;
+        end
+        else begin
+          XScroll:=0;
+          YScroll:=-YScroll;
+        end;
+      end
+      else begin
+        Dec(FWheelAccumulator, WHEEL_DELTA);
+        if TTileBoxAccess(Owner).Orientation = sbVertical then begin
+          XScroll:=IfThen(TTileBoxAccess(Owner).UseRightToLeftScrollBar, -XScroll, XScroll);
+          YScroll:=0;
+        end
+        else begin
+          XScroll:=0;
+          YScroll:=YScroll;
+        end;
+      end;
+      Parent.ScrollBy(XScroll, YScroll);
+    end;
+  finally
+    if Abs(FWheelAccumulator) >= WHEEL_DELTA then
+      FWheelTimer.Enabled:=True;
+  end;
 end;
 
 procedure TCustomTileControl.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
