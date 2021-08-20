@@ -117,7 +117,6 @@ type
     function findEmptyCellX(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
     function findEmptyCellY(const X, Y: Integer; const ParentRect: TRect; const TargetSize: TPoint; out OX, OY: Integer): Boolean;
     procedure findEmptySlot(Orientation: TScrollBarKind; const ParentRect: TRect; var TargetPosition: TPoint; const TargetSize: TPoint);
-    function cellsToSize(const cels, spacer: Integer): Integer; inline;
     function GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
     function GetVerticalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
     procedure GetDefaultPosition(const ATileControl: TCustomTileControl; var ACol, ARow: Integer);
@@ -240,6 +239,7 @@ type
     procedure Loaded; override;
     procedure Resize; override;
     procedure CalcRowsCols; virtual;
+    function  cellsToSize(const cels, spacer: Integer): Integer; inline;
     procedure MakeVisible(const Bounds: TRect); virtual;
     procedure UpdateControl(const Index: Integer); virtual;
     procedure UpdateControls(const Rebuild: Boolean); virtual;
@@ -682,6 +682,9 @@ var
   Tile: TCustomTileControl;
   ACol, ARow: Integer;
 begin
+
+  if Owner.HandleAllocated then
+    Owner.CalcRowsCols;
   for i:=0 to Count - 1 do begin
     Item:=Items[i];
     if not Item.TilePosition.AutoPositioning then
@@ -874,7 +877,7 @@ begin
   OY:=Y;
   a:=X;
   b:=Owner.ColCount;
-  if b <= 0 then
+  if (a < 0) or (b <= 0) then
     Exit;
   if a > (b - 1) then begin
     OX:=0;
@@ -929,10 +932,13 @@ begin
       TargetPosition.X:=X;
       TargetPosition.Y:=Y;
       findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
+      Exit;
     end
     else if not found and PointsEqual(TargetPosition, Point(X, Y)) then begin
+      // we have not found empty space for our tile, try going to other row and find again
       TargetPosition.X:=0;
-      TargetPosition.Y:=0;
+      Inc(TargetPosition.Y);
+      findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
       Exit;
     end;
   end
@@ -942,10 +948,12 @@ begin
       TargetPosition.X:=X;
       TargetPosition.Y:=Y;
       findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
+      Exit;
     end
     else if not found and PointsEqual(TargetPosition, Point(X, Y)) then begin
-      TargetPosition.X:=0;
+      Inc(TargetPosition.X);
       TargetPosition.Y:=0;
+      findEmptySlot(Orientation, ParentRect, TargetPosition, TargetSize);
       Exit;
     end;
   end;
@@ -954,17 +962,12 @@ begin
   TargetPosition.Y:=Y;
 end;
 
-function TTileControlsCollection.cellsToSize(const cels, spacer: Integer): Integer;
-begin
-  Result:=(48 + spacer) * cels;
-end;
-
 function TTileControlsCollection.GetHorizontalPos(const StartPoint: TPoint; const HostRect: TRect; const TileSize: TPoint): TPoint;
 begin
   Result:=StartPoint;
   while True do begin
     findEmptySlot(sbHorizontal, HostRect, Result, TileSize);
-    if cellsToSize(Result.X + TileSize.X, Owner.Spacer) > HostRect.Right then begin
+    if Owner.cellsToSize(Result.X + TileSize.X, Owner.Spacer) > HostRect.Right then begin
       // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
       if (Owner.ColCount >= TileSize.X) and (Result.X > 0) then begin
         Result.X:=-1;
@@ -996,7 +999,7 @@ begin
   Result:=StartPoint;
   while True do begin
     findEmptySlot(sbVertical, HostRect, Result, TileSize);
-    if cellsToSize(Result.Y + TileSize.Y, Owner.Spacer) > HostRect.Bottom then begin
+    if Owner.cellsToSize(Result.Y + TileSize.Y, Owner.Spacer) > HostRect.Bottom then begin
       // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
       if (Owner.RowCount >= TileSize.Y) and (Result.Y > 0) then begin
         Result.Y:=-1;
@@ -1060,7 +1063,7 @@ begin
       //   in other situation (sbHorizontal), we place tiles from top to bottom and if we cant go down any more,
       //   than we move column right from left to right.
       if Owner.Orientation = sbVertical then begin
-        if cellsToSize(Position.X + Size1.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
+        if Owner.cellsToSize(Position.X + Size1.X + Size2.X, Owner.Spacer) > ParentRect.Right then begin
           // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
           TempPosition:=Point(Position.X + Size1.X + Size2.X, Position.Y);
           TempPosition:=GetHorizontalPos(TempPosition, ParentRect, Size2);
@@ -1071,7 +1074,7 @@ begin
         end;
       end
       else begin // Owner.Orientation = sbHorizontal
-        if cellsToSize(Position.Y + Size1.Y + Size2.Y, Owner.Spacer) > ParentRect.Bottom then begin
+        if Owner.cellsToSize(Position.Y + Size1.Y + Size2.Y, Owner.Spacer) > ParentRect.Bottom then begin
           // szukaj pierwszej wolnej pozycji w kolejnym rzedzie
           TempPosition:=Point(Position.X, Position.Y + Size1.Y + Size2.Y);
           TempPosition:=GetVerticalPos(TempPosition, ParentRect, Size2);
@@ -1329,14 +1332,25 @@ begin
   AdjustClientRect(ClientRect);
   InflateRect(ClientRect, -IndentHorz, -IndentVert);
   FColCount:=Abs(RectWidth(ClientRect)) div 48;
-  while (FColCount > 0) and ((48 * FColCount + Spacer * FColCount) > Abs(RectWidth(ClientRect))) do
+  while (FColCount > 0) and (cellsToSize(FColCount, Spacer) > Abs(RectWidth(ClientRect))) do
     Dec(FColCount);
   Inc(FColCount);
+//  FColCount:=Abs(RectWidth(ClientRect)) div (48 + Spacer);
+//  if FColCount < 1 then
+//    FColCount:=1;
 
   FRowCount:=Abs(RectHeight(ClientRect)) div 48;
-  while (FRowCount > 0) and ((48 * FRowCount + Spacer * FRowCount) > Abs(RectHeight(ClientRect))) do
+  while (FRowCount > 0) and (cellsToSize(FRowCount, Spacer) > Abs(RectHeight(ClientRect))) do
     Dec(FRowCount);
   Inc(FRowCount);
+//  FRowCount:=Abs(RectHeight(ClientRect)) div (48 + Spacer);
+//  if FRowCount < 1 then
+//    FRowCount:=1;
+end;
+
+function TTileBox.cellsToSize(const cels, spacer: Integer): Integer;
+begin
+  Result:=(48 + spacer) * cels;
 end;
 
 procedure TTileBox.CalcScrollBar(const ScrollBar: TControlScrollBar);
@@ -2738,7 +2752,8 @@ end;
 procedure TTileBox.Loaded;
 begin
   inherited;
-  CalcRowsCols;
+  if HandleAllocated then
+    CalcRowsCols;
 end;
 
 function TTileBox.IndexOfPopup(const Sender: TObject): Integer;
