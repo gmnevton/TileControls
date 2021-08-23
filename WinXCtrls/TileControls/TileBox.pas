@@ -682,7 +682,6 @@ var
   Tile: TCustomTileControl;
   ACol, ARow: Integer;
 begin
-
   if Owner.HandleAllocated then
     Owner.CalcRowsCols;
   for i:=0 to Count - 1 do begin
@@ -2049,7 +2048,6 @@ begin
     FOnControlDblClick(Self, Control, TileControlIndex);
 end;
 
-
 procedure TTileBox.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
 var
   Tile: TCustomTileControl;
@@ -2059,14 +2057,12 @@ begin
   Accept:=(Source is TTileBox) or (Source is TCustomTileControl) or (Source is TTileDragObject);
   if Accept then begin
     drop_pt:=CalculateControlPos(Point(X, Y));
-    if TTileDragObject(Source).Control is TCustomTileControl then begin
+    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      if Tile <> Nil then begin
-        idx:=ControlsCollection.IndexOfTileControl(Tile);
-        if idx > -1 then begin
-          ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
-          UpdateControls(True);
-        end;
+      idx:=ControlsCollection.IndexOfTileControl(Tile);
+      if idx > -1 then begin
+        ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+        UpdateControls(True);
       end;
     end;
   end;
@@ -3061,138 +3057,22 @@ begin
 end;
 
 procedure TTileBox.UpdateControls(const Rebuild: Boolean);
-//var
-//  i: Integer;
-//  ScrollPos: TPoint;
-//  TileSize: TPoint;
-//  ViewPos: TPoint;
-//  Tile: TTileControl;
-//  HorzSpace, VertSpace: Integer;
-
-//  ControlRect: TRect;
-//  Position: TPoint;
-//  Size: TPoint;
-//  MaxHeight, MaxWidth: Integer;
-//  GroupWidth, GroupHeight: Integer;
-//  SizeX, SizeY: Integer;
 begin
-  if not Updating then begin
-    Updating:=True;
-    try
-      if (GetControlsCount > 0) then begin
-        if Rebuild then begin
-          FControlsCollection.RebuildAlignment;
-          FControlsCollection.AlignTileControls(Nil);
-
-//          ScrollPos.X:=0 - HorzScrollBar.Position;
-//          ScrollPos.Y:=0 - VertScrollBar.Position;
-//          ViewPos:=Point(0, 0);
-
-
-//          if Orientation = sbVertical then begin
-//            if (SizeX > ClientWidth) and not HorzScrollBarVisible then
-//              HorzScrollBar.Visible:=True;
-//          end
-//          else begin
-//            if (SizeY > ClientHeight) and not VertScrollBarVisible then
-//              VertScrollBar.Visible:=True;
-//          end;
-
-{          for i:=0 to GetControlsCount - 1 do begin
-            HorzSpace:=ClientWidth;
-            VertSpace:=ClientHeight;
-            Tile:=GetTileControl(i);
-            CalculateControlBounds(i, TileSize);
-//            Tile.SetBounds(TilePos.X + ViewPos.X, TilePos.Y + ViewPos.Y, TileSize.X, TileSize.Y);
-            Tile.Paint;
-//            Application.ProcessMessages;
-
-//            if Orientation = sbVertical then begin
-//              if VertScrollBar.IsScrollBarVisible <> VertScrollBarVisible then begin
-//                Updating:=False;
-//                UpdateControls(Rebuild);
-//                Break;
-//              end;
-//            end
-//            else begin
-//              if HorzScrollBar.IsScrollBarVisible <> HorzScrollBarVisible then begin
-//                Updating:=False;
-//                UpdateControls(Rebuild);
-//                Break;
-//              end;
-//            end;
-
-            if Orientation = sbVertical then begin
-              Inc(ViewPos.X, TileSize.X);
-
-//              if TilePos.X + TileSize.X > HorzSpace then begin
-//                TilePos.X:=0;
-//                Inc(TilePos.Y, TileSize.Y);
-//              end;
-            end
-            else begin
-              Inc(ViewPos.Y, TileSize.Y);
-
-//              if TilePos.Y + TileSize.Y > VertSpace then begin
-//                TilePos.Y:=0;
-//                Inc(TilePos.X, TileSize.X);
-//              end;
-            end;
-
-//            if Orientation = sbVertical then begin
-//              FColCount:=1;
-//
-//              if TileSize.X > 0 then begin
-//                FColCount:=HorzSpace div TileSize.X;
-//                if FColCount = 0 then
-//                  FColCount:=1;
-//              end;
-//
-//              FRowCount:=GetControlsCount div FColCount;
-//            end
-//            else begin
-//              FRowCount:=1;
-//
-//              if TileSize.Y > 0 then begin
-//                FRowCount:=VertSpace div TileSize.Y;
-//                if FRowCount = 0 then
-//                  FRowCount:=1;
-//              end;
-//
-//              FColCount:=GetControlsCount div FRowCount;
-//            end;
-          end;}
-        end;
-
-//        if ActiveControl <> Nil then begin
-//          i:=IndexOfTileControl(ActiveControl);
-//          TileControlIndex:=i;
-//
-//          if i >= 0 then
-//            Tile:=GetTileControl(i)
-//          else
-//            Tile:=Nil;
-//
-//          ActiveControl:=Tile;
-//        end
-//        else
-//          TileControlIndex:=-1;
-
-//        if ActiveControl <> Nil then begin
-//          MakeVisible(ActiveControl.BoundsRect);
-//          ActiveControl.Invalidate;
-//        end
-//        else
-//          TileControlIndex:=-1;
-
-        Update;
-
-//        if Assigned(FOnChange) then
-//          OnChangeSelection(Self);
+  if Updating then
+    Exit;
+  //
+  Updating:=True;
+  try
+    if (GetControlsCount > 0) then begin
+      if Rebuild then begin
+        FControlsCollection.RebuildAlignment;
+        FControlsCollection.AlignTileControls(Nil);
       end;
-    finally
-      Updating:=False;
+
+      Update;
     end;
+  finally
+    Updating:=False;
   end;
 end;
 
