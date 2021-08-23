@@ -133,8 +133,7 @@ type
     FOnPaint: TTilePaintEvent;
     FLastLMouseClick: TPoint;
     FLMouseClicked: Boolean;
-    FWheelAccumulator: Integer;
-    FWheelTimer: TTimer;
+    FNowDragging: Boolean;
 
     procedure SetAlignment(Value: TAlignment);
     procedure SetVerticalAlignment(const Value: TVerticalAlignment);
@@ -154,24 +153,23 @@ type
     procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
     procedure CMControlListChanging(var Msg: TCMControlListChanging); message CM_CONTROLLISTCHANGING;
   protected
+    procedure EnterDragMode; virtual;
+    procedure LeaveDragMode; virtual;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;  MousePos: TPoint): Boolean; override;
-    procedure DoMouseScroll(Sender: TObject); virtual;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
     procedure DoStartDrag(var DragObject: TDragObject); override;
     procedure DoEndDrag(Target: TObject; X, Y: Integer); override;
-//    procedure DisplayShadow; virtual;
-//    procedure HideShadow; virtual;
-//    procedure CMVisibleChanged(var Message: TMessage); message CM_VISIBLECHANGED;
     procedure Paint; override;
     procedure PaintTo(DC: HDC; X, Y: Integer); overload;
     procedure PaintTo(Canvas: TCanvas; X, Y: Integer); overload;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-//    procedure SetBounds(ALeft, ATop, AWidth, AHeight: Integer); override;
+    //
+    function InDragMode: Boolean;
     property Canvas;
     property OnPaint: TTilePaintEvent read FOnPaint write FOnPaint;
   published
@@ -513,11 +511,7 @@ begin
   FSizeFixed:=True;
   FWordWrap:=False;
   FHovered:=False;
-  FWheelAccumulator:=0;
-  FWheelTimer:=TTimer.Create(Self);
-  FWheelTimer.Enabled:=False;
-  FWheelTimer.Interval:=100;
-  FWheelTimer.OnTimer:=DoMouseScroll;
+  FNowDragging:=False;
 
   FGlyph:=TTileGlyph.Create(Self);
   FText1:=TTileText.Create(Self);
@@ -528,14 +522,27 @@ end;
 
 destructor TCustomTileControl.Destroy;
 begin
-  FWheelTimer.Enabled:=False;
-  FreeAndNil(FWheelTimer);
   FreeAndNil(FText4);
   FreeAndNil(FText3);
   FreeAndNil(FText2);
   FreeAndNil(FText1);
   FreeAndNil(FGlyph);
   inherited Destroy;
+end;
+
+procedure TCustomTileControl.EnterDragMode;
+begin
+  FNowDragging:=True;
+end;
+
+procedure TCustomTileControl.LeaveDragMode;
+begin
+  FNowDragging:=False;
+end;
+
+function TCustomTileControl.InDragMode: Boolean;
+begin
+  Result:=FNowDragging;
 end;
 
 procedure TCustomTileControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -552,6 +559,8 @@ end;
 procedure TCustomTileControl.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
   if FLMouseClicked and (ssLeft in Shift) and not PointsEqual(Point(X, Y), FLastLMouseClick) and not Self.Dragging then begin
+    // we need to know that we are about to drag this control, so we unpin it from its position and than when dropped we can set new position
+    Self.EnterDragMode;
     Self.BeginDrag(True);
   end;
   inherited;
@@ -559,7 +568,7 @@ end;
 
 procedure TCustomTileControl.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  if (Button = mbLeft) and not (ssDouble in Shift) then begin
+  if (Button = mbLeft) and not (ssDouble in Shift) and not InDragMode then begin
     FLastLMouseClick:=EmptyPoint;
     FLMouseClicked:=False;
   end;
@@ -571,52 +580,16 @@ var
   IsNeg: Boolean;
 begin
   Result := True;
-  if not TTileBoxAccess(Owner).HorzScrollBar.IsScrollBarVisible and not TTileBoxAccess(Owner).VertScrollBar.IsScrollBarVisible then
-    Exit(False);
-  Inc(FWheelAccumulator, WheelDelta); // this is threadsafe operation; according to Delphi help
-  // run some timer, to enable async scrolling
-  FWheelTimer.Enabled:=True;
-end;
-
-procedure TCustomTileControl.DoMouseScroll(Sender: TObject);
-var
-  IsNeg: Boolean;
-  XScroll, YScroll: Integer;
-begin
-  FWheelTimer.Enabled:=False;
-  XScroll:=GetSystemMetrics(SM_CXHSCROLL);
-  YScroll:=GetSystemMetrics(SM_CYVSCROLL);
-  try
-    if Abs(FWheelAccumulator) >= WHEEL_DELTA then begin
-      IsNeg := FWheelAccumulator < 0;
-      if IsNeg then begin
-        Inc(FWheelAccumulator, WHEEL_DELTA);
-        if TTileBoxAccess(Owner).Orientation = sbVertical then begin
-          XScroll:=IfThen(TTileBoxAccess(Owner).UseRightToLeftScrollBar, XScroll, -XScroll);
-          YScroll:=0;
-        end
-        else begin
-          XScroll:=0;
-          YScroll:=-YScroll;
-        end;
-      end
-      else begin
-        Dec(FWheelAccumulator, WHEEL_DELTA);
-        if TTileBoxAccess(Owner).Orientation = sbVertical then begin
-          XScroll:=IfThen(TTileBoxAccess(Owner).UseRightToLeftScrollBar, -XScroll, XScroll);
-          YScroll:=0;
-        end
-        else begin
-          XScroll:=0;
-          YScroll:=YScroll;
-        end;
-      end;
-      Parent.ScrollBy(XScroll, YScroll);
-    end;
-  finally
-    if Abs(FWheelAccumulator) >= WHEEL_DELTA then
-      FWheelTimer.Enabled:=True;
-  end;
+  IsNeg := WheelDelta < 0;
+  if TTileBoxAccess(Owner).Orientation = sbVertical then begin
+    // need to check is RTL alignment is used
+    if TTileBoxAccess(Owner).UseRightToLeftScrollBar then
+      Parent.Perform(WM_HSCROLL, IfThen(IsNeg, SB_LINEUP, SB_LINEDOWN), 0)
+    else
+      Parent.Perform(WM_HSCROLL, IfThen(IsNeg, SB_LINEDOWN, SB_LINEUP), 0);
+  end
+  else
+    Parent.Perform(WM_VSCROLL, IfThen(IsNeg, SB_LINEDOWN, SB_LINEUP), 0);
 end;
 
 procedure TCustomTileControl.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
@@ -658,64 +631,26 @@ end;
 
 procedure TCustomTileControl.DoEndDrag(Target: TObject; X, Y: Integer);
 begin
+  Self.LeaveDragMode;
   TTileBoxAccess(Parent).SharedEndDrag(Target, X, Y);
 end;
-
-{
-procedure TCustomTileControl.DisplayShadow;
-begin
-//  if CheckWin32Version(5, 1) then
-//    Exit;
-  if not Assigned(FRShadow) then begin
-    FRShadow := TShadowWindow.CreateShadow(Self, csRight);
-    FBShadow := TShadowWindow.CreateShadow(Self, csBottom);
-  end;
-  if Assigned(FRShadow) then begin
-    FRShadow.Control := Self;
-    FBShadow.Control := Self;
-  end;
-end;
-
-procedure TCustomTileControl.HideShadow;
-begin
-//  if CheckWin32Version(5, 1) or not Assigned(FRShadow) then
-//    Exit;
-  if Assigned(FRShadow) then begin
-    FRShadow.Hide;
-    FBShadow.Hide;
-  end;
-end;
-
-procedure TCustomTileControl.CMVisibleChanged(var Message: TMessage);
-begin
-  if Visible then
-    DisplayShadow
-  else
-    HideShadow;
-  inherited;
-end;
-}
 
 procedure TCustomTileControl.Paint;
 var
   LBuffer: TBitmap;
   LCanvas: TCanvas;
-//  LBrushStyle: TBrushStyle;
 
   procedure FullRepaint;
   var
     R: TRect;
   Begin
     R:=GetClientRect;
-    //AdjustClientRect(R);
-//      LBrushStyle:=LCanvas.Brush.Style;
     LCanvas.Brush.Style:=bsSolid;
     if Enabled then
       LCanvas.Brush.Color:=Self.Color
     else
       LCanvas.Brush.Color:=clGray;
     LCanvas.FillRect(R);
-//    LCanvas.Brush.Style:=LBrushStyle;
     LCanvas.Brush.Style:=bsClear;
   end;
 
@@ -756,8 +691,6 @@ begin
       LBuffer.Free;
     end;
   end;
-//  else
-//    inherited;
 end;
 
 procedure TCustomTileControl.PaintTo(DC: HDC; X, Y: Integer);
@@ -785,15 +718,6 @@ begin
     Canvas.Unlock;
   end;
 end;
-
-{
-procedure TCustomTileControl.SetBounds(ALeft, ATop, AWidth, AHeight: Integer);
-begin
-  HideShadow;
-  inherited;
-  DisplayShadow;
-end;
-}
 
 procedure TCustomTileControl.SetAlignment(Value: TAlignment);
 begin

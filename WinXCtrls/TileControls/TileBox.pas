@@ -1032,7 +1032,6 @@ var
   Control: TTileControl;
   ParentRect: TRect;
   Position, Size1, Size2, TempPosition: TPoint;
-  go_once, go_twice: Boolean;
 begin
   if (Owner <> Nil) and not (csLoading in Owner.ComponentState) then begin
     Position:=EmptyPoint; // Point(-1, -1);
@@ -1380,11 +1379,11 @@ var
       end;
   end;
 
-var
-  HorzScrollSize, VertScrollSize: Integer;
+//var
+//  HorzScrollSize, VertScrollSize: Integer;
 begin
-  HorzScrollSize:=GetSystemMetrics(SM_CXHSCROLL) * 2;
-  VertScrollSize:=GetSystemMetrics(SM_CXVSCROLL) * 2;
+//  HorzScrollSize:=GetSystemMetrics(SM_CXHSCROLL) * 2;
+//  VertScrollSize:=GetSystemMetrics(SM_CXVSCROLL) * 2;
   NewRange:=0;
   AlignMargin:=0;
   for I:=0 to Self.ControlCount - 1 do
@@ -1739,7 +1738,7 @@ var
 begin
   Tile:=TTileControl(Sender);
 
-  if Tile = Nil then
+  if (Tile = Nil) or Tile.InDragMode then
     Exit;
 
   if Button = mbLeft then begin
@@ -3062,18 +3061,18 @@ begin
 end;
 
 procedure TTileBox.UpdateControls(const Rebuild: Boolean);
-var
-  i: Integer;
+//var
+//  i: Integer;
 //  ScrollPos: TPoint;
 //  TileSize: TPoint;
 //  ViewPos: TPoint;
-  Tile: TTileControl;
+//  Tile: TTileControl;
 //  HorzSpace, VertSpace: Integer;
 
-  ControlRect: TRect;
-  Position: TPoint;
-  Size: TPoint;
-  MaxHeight, MaxWidth: Integer;
+//  ControlRect: TRect;
+//  Position: TPoint;
+//  Size: TPoint;
+//  MaxHeight, MaxWidth: Integer;
 //  GroupWidth, GroupHeight: Integer;
 //  SizeX, SizeY: Integer;
 begin
