@@ -155,6 +155,7 @@ type
   protected
     procedure EnterDragMode; virtual;
     procedure LeaveDragMode; virtual;
+    procedure ClearMouseLClickInfo; inline;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
@@ -533,16 +534,25 @@ end;
 procedure TCustomTileControl.EnterDragMode;
 begin
   FNowDragging:=True;
+  Hide;
 end;
 
 procedure TCustomTileControl.LeaveDragMode;
 begin
   FNowDragging:=False;
+  ClearMouseLClickInfo;
+  Show;
 end;
 
 function TCustomTileControl.InDragMode: Boolean;
 begin
   Result:=FNowDragging;
+end;
+
+procedure TCustomTileControl.ClearMouseLClickInfo;
+begin
+  FLastLMouseClick:=EmptyPoint;
+  FLMouseClicked:=False;
 end;
 
 procedure TCustomTileControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -568,10 +578,9 @@ end;
 
 procedure TCustomTileControl.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  if (Button = mbLeft) and not (ssDouble in Shift) and not InDragMode then begin
-    FLastLMouseClick:=EmptyPoint;
-    FLMouseClicked:=False;
-  end;
+  if (Button = mbLeft) and not (ssDouble in Shift) and not InDragMode then
+    ClearMouseLClickInfo;
+  //
   inherited;
 end;
 
@@ -601,14 +610,12 @@ begin
   Accept:=(Source is TTileDragObject);
   if Accept and (State = dsDragMove) then begin
     drop_pt:=TTileBoxAccess(Parent).CalculateControlPos(Point(X, Y));
-    if TTileDragObject(Source).Control is TCustomTileControl then begin
+    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      if Tile <> Nil then begin
-        idx:=TTileBoxAccess(Parent).ControlsCollection.IndexOfTileControl(Tile);
-        if idx > -1 then begin
-          TTileBoxAccess(Parent).ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
-          TTileBoxAccess(Parent).UpdateControls(True);
-        end;
+      idx:=TTileBoxAccess(Parent).ControlsCollection.IndexOfTileControl(Tile);
+      if idx > -1 then begin
+        TTileBoxAccess(Parent).ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+        TTileBoxAccess(Parent).UpdateControls(True);
       end;
     end;
   end;
