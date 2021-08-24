@@ -128,7 +128,7 @@ type
 
     procedure AddTileControl(const ATileControl: TCustomTileControl; AIndex: Integer = -1);
     procedure RemoveTileControl(const ATileControl: TCustomTileControl);
-    function IndexOfTileControl(const ATileControl: TCustomTileControl): Integer;
+    function ControlIndex(const ATileControl: TCustomTileControl): Integer; inline;
     procedure RebuildAlignment;
     procedure AlignTileControls(const ATileControl: TCustomTileControl);
 
@@ -259,7 +259,7 @@ type
     destructor Destroy; override;
     procedure ClearSelection(const Update: Boolean = False);
     procedure SelectAll;
-    function IndexOfTileControl(const Control: TCustomTileControl): Integer;
+    function IndexOfTileControl(const Control: TCustomTileControl): Integer; inline;
     function IndexOfPopup(const Sender: TObject): Integer;
     procedure UpdateTiles;
 
@@ -571,12 +571,15 @@ begin
     try
       Tile.Name:='TileControl' + IntToStr(max_num + 1);
       Tile.Visible:=False;
+      Tile.ControlsCollectionIndex:=Item.Index;
+      //
       TTileControlItem(Item).FTileControl:=Tile;
       TTileControlItem(Item).FCol:=-1;
       TTileControlItem(Item).FRow:=-1;
       GetDefaultPosition(Tile, X, Y);
       TTileControlItem(Item).FCol:=X;
       TTileControlItem(Item).FRow:=Y;
+      //
       Tile.Parent:=Owner;
       Tile.Visible:=True;
     except
@@ -607,9 +610,20 @@ begin
 end;
 
 procedure TTileControlsCollection.Update(Item: TCollectionItem);
+var
+  i: Integer;
 begin
-  inherited Update(Item);
+//  inherited Update(Item);
 //  exit;
+  // update all indexes
+  if not Owner.HandleAllocated or (csLoading in Owner.ComponentState) then
+    Exit;
+  if Item = Nil then begin
+    for i:=0 to Count - 1 do begin
+      if Items[i].TileControl <> Nil then
+        Items[i].TileControl.ControlsCollectionIndex:=i;
+    end;
+  end;
   if Owner <> Nil then
     Owner.Realign;
 end;
@@ -634,7 +648,7 @@ var
   Item: TTileControlItem;
   X, Y: Integer;
 begin
-  if IndexOfTileControl(ATileControl) = -1 then begin
+  if ControlIndex(ATileControl) = -1 then begin
     X:=0;
     Y:=0;
     if AIndex < 0 then begin
@@ -645,6 +659,7 @@ begin
     else
       Item:=Items[AIndex];
 
+    ATileControl.ControlsCollectionIndex:=Item.Index;
     Item.FTileControl:=ATileControl;
     if not (csLoading in Owner.ComponentState) and not (csUpdating in Owner.ComponentState) and not (csDestroying in Owner.ComponentState) then begin
       GetDefaultPosition(ATileControl, X, Y);
@@ -670,12 +685,14 @@ begin
   end;
 end;
 
-function TTileControlsCollection.IndexOfTileControl(const ATileControl: TCustomTileControl): Integer;
+function TTileControlsCollection.ControlIndex(const ATileControl: TCustomTileControl): Integer;
 begin
   if ATileControl <> Nil then begin
-    for Result:=0 to Count - 1 do
-      if Items[Result].TileControl = ATileControl then
-        Exit;
+//    for Result:=0 to Count - 1 do
+//      if Items[Result].TileControl = ATileControl then
+//        Exit;
+    Result:=ATileControl.ControlsCollectionIndex;
+    Exit;
   end;
   Result:=-1;
 end;
@@ -727,7 +744,7 @@ var
 //  SizeX, SizeY: Integer;
 //  GroupCnt: Integer;
 begin
-  idx:=IndexOfTileControl(ATileControl);
+  idx:=ControlIndex(ATileControl);
   if idx = -1 then
     idx:=0;
 
@@ -1047,7 +1064,7 @@ begin
     Owner.AdjustClientRect(ParentRect);
     InflateRect(ParentRect, -Owner.IndentHorz, -Owner.IndentVert);
 
-    idx:=IndexOfTileControl(ATileControl);
+    idx:=ControlIndex(ATileControl);
     if idx > -1 then begin
       before:=idx - 1;
       if before > -1 then begin
@@ -1055,7 +1072,6 @@ begin
 //        Position:=Control.BoundsRect.TopLeft;
         Position:=Items[before].Position;
       end;
-      Size1:=Point(0, 0);
       if Control <> Nil then
         Owner.CalculateControlSize(Control, ParentRect, Size1);
       Owner.CalculateControlSize(ATileControl, ParentRect, Size2);
@@ -1636,6 +1652,7 @@ begin
 
 //  ActiveControl:=TTileControl(Sender);
   TileControlIndex:=IndexOfTileControl(TTileControl(Sender));
+  //TileControlIndex:=TTileControl(Sender).ControlsCollectionIndex;
   UpdateControls(True);
   DoClick(ActiveControl);
 end;
@@ -1649,6 +1666,7 @@ begin
 
 //  ActiveControl:=TTileControl(Sender);
   TileControlIndex:=IndexOfTileControl(TTileControl(Sender));
+  //TileControlIndex:=TTileControl(Sender).ControlsCollectionIndex;
   UpdateControls(True);
   DoDblClick(ActiveControl);
 end;
@@ -1692,6 +1710,7 @@ begin
 
       ActiveControl:=Tile;
       TileControlIndex:=IndexOfTileControl(ActiveControl);
+      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
       UpdateControls(True);
 
       if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
@@ -1713,6 +1732,7 @@ begin
 
       ActiveControl:=Tile;
       TileControlIndex:=IndexOfTileControl(ActiveControl);
+      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
       UpdateControls(True);
 
       if FSelectedControls.Count > 1 then begin
@@ -1774,6 +1794,7 @@ begin
 
       ActiveControl:=Tile;
       TileControlIndex:=IndexOfTileControl(ActiveControl);
+      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
       UpdateControls(True);
 
       if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
@@ -1795,6 +1816,7 @@ begin
 
       ActiveControl:=Tile;
       TileControlIndex:=IndexOfTileControl(ActiveControl);
+      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
       UpdateControls(True);
 
       if FSelectedControls.Count > 1 then begin
@@ -1826,18 +1848,22 @@ begin
       if (ActiveControl <> Nil) and (Sender = ActiveControl) then begin
         Sel:=cdsSelected;
         if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
           Sel:=cdsSelFocused;
       end
       else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
         Sel:=cdsFocused;
     end
     else begin
       if FSelectedControls.IndexOf(TTileControl(Sender)) >= 0 then begin
         Sel:=cdsSelected;
         if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
           Sel:=cdsSelFocused;
       end
       else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
         Sel:=cdsFocused;
     end;
 
@@ -2071,7 +2097,8 @@ begin
       drop_pt:=CalculateControlPos(Point(X, Y));
       if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
         Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-        idx:=ControlsCollection.IndexOfTileControl(Tile);
+        //idx:=ControlsCollection.IndexOfTileControl(Tile);
+        idx:=Tile.ControlsCollectionIndex;
         if idx > -1 then begin
           ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
           UpdateControls(True);
@@ -2095,7 +2122,8 @@ begin
     drop_pt:=CalculateControlPos(Point(X, Y));
     if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      idx:=ControlsCollection.IndexOfTileControl(Tile);
+      //idx:=ControlsCollection.IndexOfTileControl(Tile);
+      idx:=Tile.ControlsCollectionIndex;
       if idx > -1 then begin
         if PointsEqual(drop_pt, ControlsCollection.Items[idx].GetPosition) then begin
           ControlsCollection.Items[idx].FUserPosition:=False;

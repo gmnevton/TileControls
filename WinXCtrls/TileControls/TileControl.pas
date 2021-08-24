@@ -167,14 +167,13 @@ type
     procedure Paint; override;
     procedure PaintTo(DC: HDC; X, Y: Integer); overload;
     procedure PaintTo(Canvas: TCanvas; X, Y: Integer); overload;
-    //
-    property ControlsCollectionIndex: Integer read FControlsCollectionIndex write FControlsCollectionIndex;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     //
     function InDragMode: Boolean;
     property Canvas;
+    property ControlsCollectionIndex: Integer read FControlsCollectionIndex write FControlsCollectionIndex;
     property OnPaint: TTilePaintEvent read FOnPaint write FOnPaint;
   published
     property Alignment: TAlignment read FAlignment write SetAlignment default taCenter;
@@ -516,6 +515,7 @@ begin
   FWordWrap:=False;
   FHovered:=False;
   FNowDragging:=False;
+  FControlsCollectionIndex:=-1;
 
   FGlyph:=TTileGlyph.Create(Self);
   FText1:=TTileText.Create(Self);
@@ -615,7 +615,7 @@ begin
     drop_pt:=TTileBoxAccess(Parent).CalculateControlPos(Point(X, Y));
     if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      idx:=TTileBoxAccess(Parent).ControlsCollection.IndexOfTileControl(Tile);
+      idx:=TTileBoxAccess(Parent).ControlsCollection.ControlIndex(Tile);
       if idx > -1 then begin
         TTileBoxAccess(Parent).ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
         TTileBoxAccess(Parent).UpdateControls(True);
@@ -851,7 +851,7 @@ procedure TCustomTileControl.SetManualUserPosition;
 var
   idx: Integer;
 begin
-  idx:=TTileBox(Parent).ControlsCollection.IndexOfTileControl(Self);
+  idx:=TTileBox(Parent).ControlsCollection.ControlIndex(Self);
   if idx > -1 then
     TTileBox(Parent).ControlsCollection.Items[idx].FUserPosition:=True;
 end;
