@@ -135,6 +135,8 @@ type
     property Items[Index: Integer]: TTileControlItem read GetItem write SetItem; default;
   end;
 
+  TTileBoxDragMode = (dmNormal, dmDragging, dmDraggingOutside);
+
   TTileBox = class(TScrollingWinControl) // TScrollBox
   private
     FBorderStyle: TBorderStyle;
@@ -176,6 +178,8 @@ type
     ActiveControl: TTileControl;
     Updating: Boolean;
     ControlPainting: Boolean;
+    DragMode: TTileBoxDragMode;
+    SavedBkgndColor: TColor;
 
     procedure SetControlsCollection(const Value: TTileControlsCollection);
     procedure SetSelectedColor(const Value: TColor);
@@ -562,7 +566,8 @@ begin
       end;
     end;
 
-    Tile:=TTileControl.Create(Owner.Parent);
+//    Tile:=TTileControl.Create(Owner.Parent);
+    Tile:=TTileControl.Create(Owner);
     try
       Tile.Name:='TileControl' + IntToStr(max_num + 1);
       Tile.Visible:=False;
@@ -2005,6 +2010,7 @@ begin
   FColCount:=0;
 //  CalcRowsCols;
   FDragObject:=Nil;
+  DragMode:=dmNormal;
 
   VertScrollBar.Smooth:=True;
   VertScrollBar.Tracking:=True;
@@ -2056,14 +2062,25 @@ var
 begin
   Accept:=(Source is TTileBox) or (Source is TCustomTileControl) or (Source is TTileDragObject);
   if Accept then begin
-    drop_pt:=CalculateControlPos(Point(X, Y));
-    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
-      Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      idx:=ControlsCollection.IndexOfTileControl(Tile);
-      if idx > -1 then begin
-        ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
-        UpdateControls(True);
+    if State = dsDragEnter then begin
+      DragMode:=dmDragging;
+      SavedBkgndColor:=Color;
+      Color:=$002d2d2d;
+    end
+    else if State = dsDragMove then begin
+      drop_pt:=CalculateControlPos(Point(X, Y));
+      if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
+        Tile:=TCustomTileControl(TTileDragObject(Source).Control);
+        idx:=ControlsCollection.IndexOfTileControl(Tile);
+        if idx > -1 then begin
+          ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+          UpdateControls(True);
+        end;
       end;
+    end
+    else if State = dsDragLeave then begin
+      DragMode:=dmDraggingOutside;
+      Color:=SavedBkgndColor;
     end;
   end;
 end;
@@ -2076,21 +2093,19 @@ var
 begin
   if Source is TTileDragObject then begin
     drop_pt:=CalculateControlPos(Point(X, Y));
-    if TTileDragObject(Source).Control is TCustomTileControl then begin
+    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      if Tile <> Nil then begin
-        idx:=ControlsCollection.IndexOfTileControl(Tile);
-        if idx > -1 then begin
-          if PointsEqual(drop_pt, ControlsCollection.Items[idx].GetPosition) then begin
-            ControlsCollection.Items[idx].FUserPosition:=False;
-          end
-          else begin
-            if ControlsCollection.Items[idx].FUserPosition and ControlsCollection.Items[idx].TilePosition.AutoPositioning then
-              ControlsCollection.Items[idx].TilePosition.AutoPositioning:=False;
-          end;
-          ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
-          UpdateControls(True);
+      idx:=ControlsCollection.IndexOfTileControl(Tile);
+      if idx > -1 then begin
+        if PointsEqual(drop_pt, ControlsCollection.Items[idx].GetPosition) then begin
+          ControlsCollection.Items[idx].FUserPosition:=False;
+        end
+        else begin
+          if ControlsCollection.Items[idx].FUserPosition and ControlsCollection.Items[idx].TilePosition.AutoPositioning then
+            ControlsCollection.Items[idx].TilePosition.AutoPositioning:=False;
         end;
+        ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+        UpdateControls(True);
       end;
     end;
   end;
@@ -2100,11 +2115,12 @@ end;
 
 procedure TTileBox.DoStartDrag(var DragObject: TDragObject);
 begin
-//
+  DragMode:=dmDragging;
 end;
 
 procedure TTileBox.DoEndDrag(Target: TObject; X, Y: Integer);
 begin
+  DragMode:=dmNormal;
   SharedEndDrag(Target, X, Y);
 end;
 

@@ -5,19 +5,25 @@ interface
 uses
   SysUtils,
   Classes,
-  Controls;
+  Controls,
+  Types;
 
 type
   TTileDragObject = class(TDragControlObject)
   private
     FDragImages: TDragImageList;
-    FX, FY: Integer;
+    FControlRect: TRect;
+    FTopLeftOffset: TPoint;
+    FSpotX, FSpotY: Integer;
   protected
     function GetDragCursor(Accepted: Boolean; X, Y: Integer): TCursor; override;
     function GetDragImages: TDragImageList; override;
   public
     constructor CreateWithHotSpot(Control: TControl; X, Y: Integer);
     destructor Destroy; override;
+    //
+    property ControlRect: TRect read FControlRect;
+    property TopLeftOffset: TPoint read FTopLeftOffset;
   end;
 
 implementation
@@ -34,13 +40,16 @@ type
 constructor TTileDragObject.CreateWithHotSpot(Control: TControl; X, Y: Integer);
 begin
   inherited Create(Control);
-  FX:=X;
-  FY:=Y;
+  FControlRect:=Control.ClientRect;
+  FTopLeftOffset:=Point(X, Y);
+  FSpotX:=X;
+  FSpotY:=Y;
 end;
 
 destructor TTileDragObject.Destroy;
 begin
-  FDragImages.Free;
+  if FDragImages <> Nil then
+    FDragImages.Free;
   inherited;
 end;
 
@@ -78,7 +87,7 @@ begin
     //Add bitmap to image list, making the grey pixels transparent
     Idx:=FDragImages.AddMasked(Bmp, TCustomTileControlAccess(Control).Color);
     //Set the drag image and hot spot
-    FDragImages.SetDragImage(Idx, FX, FY);
+    FDragImages.SetDragImage(Idx, FSpotX, FSpotY);
   finally
     Bmp.Free
   end

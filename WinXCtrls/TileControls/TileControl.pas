@@ -134,6 +134,7 @@ type
     FLastLMouseClick: TPoint;
     FLMouseClicked: Boolean;
     FNowDragging: Boolean;
+    FControlsCollectionIndex: Integer;
 
     procedure SetAlignment(Value: TAlignment);
     procedure SetVerticalAlignment(const Value: TVerticalAlignment);
@@ -166,6 +167,8 @@ type
     procedure Paint; override;
     procedure PaintTo(DC: HDC; X, Y: Integer); overload;
     procedure PaintTo(Canvas: TCanvas; X, Y: Integer); overload;
+    //
+    property ControlsCollectionIndex: Integer read FControlsCollectionIndex write FControlsCollectionIndex;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
