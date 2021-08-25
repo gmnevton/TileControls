@@ -247,6 +247,7 @@ type
     procedure MakeVisible(const Bounds: TRect); virtual;
     procedure UpdateControl(const Index: Integer); virtual;
     procedure UpdateControls(const Rebuild: Boolean); virtual;
+    procedure UpdateControlsCollectionIndexes;
     function  CalculateControlPos(const FromPoint: TPoint): TPoint; virtual;
     procedure CalculateControlSize(const Control: TCustomTileControl; const TargetRect: TRect; out ControlSize: TPoint);
     procedure CalculateControlBounds(const Index: Integer; out ControlSize: TPoint); overload; virtual;
@@ -257,6 +258,8 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    //
+    procedure AfterConstruction; override;
     procedure ClearSelection(const Update: Boolean = False);
     procedure SelectAll;
     function IndexOfTileControl(const Control: TCustomTileControl): Integer; inline;
@@ -267,8 +270,8 @@ type
     procedure Clear;
     function RemoveTile(var Tile: TTileControl): Boolean;
 
-    property RowCount: Integer read FRowCount;
     property ColCount: Integer read FColCount;
+    property RowCount: Integer read FRowCount;
     property TileControl[Index: Integer]: TTileControl read GetTileControl write SetTileControl stored False; default;
     property TileControlIndex: Integer read FControlIndex write SetControlIndex default -1;
     property TileControlsCount: Integer read GetControlsCount;
@@ -566,7 +569,6 @@ begin
       end;
     end;
 
-//    Tile:=TTileControl.Create(Owner.Parent);
     Tile:=TTileControl.Create(Owner);
     try
       Tile.Name:='TileControl' + IntToStr(max_num + 1);
@@ -613,10 +615,8 @@ procedure TTileControlsCollection.Update(Item: TCollectionItem);
 var
   i: Integer;
 begin
-//  inherited Update(Item);
-//  exit;
   // update all indexes
-  if not Owner.HandleAllocated or (csLoading in Owner.ComponentState) then
+  if (csLoading in Owner.ComponentState) or (csReading in Owner.ComponentState) then
     Exit;
   if Item = Nil then begin
     for i:=0 to Count - 1 do begin
@@ -690,7 +690,6 @@ begin
   if ATileControl <> Nil then begin
 //    for Result:=0 to Count - 1 do
 //      if Items[Result].TileControl = ATileControl then
-//        Exit;
     Result:=ATileControl.ControlsCollectionIndex;
     Exit;
   end;
@@ -704,8 +703,7 @@ var
   Tile: TCustomTileControl;
   ACol, ARow: Integer;
 begin
-  if Owner.HandleAllocated then
-    Owner.CalcRowsCols;
+  Owner.CalcRowsCols;
   for i:=0 to Count - 1 do begin
     Item:=Items[i];
     if not Item.TilePosition.AutoPositioning then
@@ -1345,6 +1343,9 @@ procedure TTileBox.CalcRowsCols;
 var
   ClientRect: TRect;
 begin
+  if not HandleAllocated then
+    Exit;
+  //
   ClientRect:=GetClientRect;
   if IsRectEmpty(ClientRect) then
     Exit;
@@ -2066,6 +2067,11 @@ begin
   FSelectedControls.Free;
   FControlsCollection.Free;
   inherited Destroy;
+end;
+
+procedure TTileBox.AfterConstruction;
+begin
+//
 end;
 
 procedure TTileBox.DoClick(const Control: TTileControl);
@@ -2791,8 +2797,7 @@ end;
 procedure TTileBox.Loaded;
 begin
   inherited;
-  if HandleAllocated then
-    CalcRowsCols;
+  UpdateControlsCollectionIndexes;
 end;
 
 function TTileBox.IndexOfPopup(const Sender: TObject): Integer;
@@ -3118,6 +3123,11 @@ begin
   finally
     Updating:=False;
   end;
+end;
+
+procedure TTileBox.UpdateControlsCollectionIndexes;
+begin
+  FControlsCollection.Update(Nil);
 end;
 
 procedure TTileBox.WMEraseBkgnd(var Message: TWmEraseBkgnd);
