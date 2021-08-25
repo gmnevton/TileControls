@@ -10,7 +10,8 @@ uses
   Controls,
   ExtCtrls,
   Types,
-  Graphics;
+  Graphics,
+  TileControlEvents;
 
 type
   TTileControl = class;
@@ -135,6 +136,7 @@ type
     FLMouseClicked: Boolean;
     FNowDragging: Boolean;
     FControlsCollectionIndex: Integer;
+    FControlEvents: TTileControlEvents;
 
     procedure SetAlignment(Value: TAlignment);
     procedure SetVerticalAlignment(const Value: TVerticalAlignment);
@@ -154,6 +156,8 @@ type
     procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
     procedure CMControlListChanging(var Msg: TCMControlListChanging); message CM_CONTROLLISTCHANGING;
   protected
+    procedure Click; override;
+    procedure DblClick; override;
     procedure EnterDragMode; virtual;
     procedure LeaveDragMode; virtual;
     procedure ClearMouseLClickInfo; inline;
@@ -174,7 +178,6 @@ type
     function InDragMode: Boolean;
     property Canvas;
     property ControlsCollectionIndex: Integer read FControlsCollectionIndex write FControlsCollectionIndex;
-    property OnPaint: TTilePaintEvent read FOnPaint write FOnPaint;
   published
     property Alignment: TAlignment read FAlignment write SetAlignment default taCenter;
     property VerticalAlignment: TVerticalAlignment read FVerticalAlignment write SetVerticalAlignment default taVerticalCenter;
@@ -190,13 +193,14 @@ type
     property WordWrap: Boolean read FWordWrap write SetWordWrap default False;
     property Hovered: Boolean read FHovered write SetHovered default False;
     property Transparent: Boolean read FTransparent write SetTransparent;
-    property OnClick;
-    property OnDblClick;
-    property OnMouseDown;
-    property OnMouseEnter;
-    property OnMouseLeave;
-    property OnMouseMove;
-    property OnMouseUp;
+//    property OnClick;
+//    property OnDblClick;
+//    property OnMouseDown;
+//    property OnMouseEnter;
+//    property OnMouseLeave;
+//    property OnMouseMove;
+//    property OnMouseUp;
+    property OnPaint: TTilePaintEvent read FOnPaint write FOnPaint;
   end;
 
   TTileControl = class(TCustomTileControl)
@@ -522,6 +526,7 @@ begin
   FText2:=TTileText.Create(Self);
   FText3:=TTileText.Create(Self);
   FText4:=TTileText.Create(Self);
+  FControlEvents:=TTileControlEvents.Create(TWinControl(Owner));
 end;
 
 destructor TCustomTileControl.Destroy;
@@ -531,7 +536,20 @@ begin
   FreeAndNil(FText2);
   FreeAndNil(FText1);
   FreeAndNil(FGlyph);
+  FreeAndNil(FControlEvents);
   inherited Destroy;
+end;
+
+procedure TCustomTileControl.Click;
+begin
+  FControlEvents.ControlClick(Self);
+  inherited;
+end;
+
+procedure TCustomTileControl.DblClick;
+begin
+  FControlEvents.ControlDblClick(Self);
+  inherited;
 end;
 
 procedure TCustomTileControl.EnterDragMode;
@@ -693,6 +711,7 @@ begin
       else
         FullRepaint;
     end;
+    FControlEvents.ControlPaint(Self, LCanvas, Self.ClientRect);
     if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then
       OnPaint(Self, LCanvas, Self.ClientRect)
   finally

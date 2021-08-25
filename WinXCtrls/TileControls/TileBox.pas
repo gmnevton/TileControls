@@ -199,18 +199,6 @@ type
     function GetControlsCount: Integer;
     function GetSelectedCount: Integer;
     //
-    procedure ControlClick(Sender: TObject);
-    procedure ControlDblClick(Sender: TObject);
-    //
-    procedure ControlMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    //
-    procedure ControlPaint(const Sender: TCustomTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect);
-    //
-    procedure ControlMouseEnter(Sender: TObject);
-    procedure ControlMouseLeave(Sender: TObject);
-    //
     procedure CalcScrollBar(const ScrollBar: TControlScrollBar);
     //
     procedure CNKeyDown(var Msg: TWMKey); message CN_KEYDOWN;
@@ -238,8 +226,8 @@ type
     procedure AdjustClientRect(var Rect: TRect); override;
     procedure AlignControls(AControl: TControl; var ARect: TRect); override;
     procedure ControlsAligned; override;
-    procedure DoClick(const Control: TTileControl); virtual;
-    procedure DoDblClick(const Control: TTileControl); virtual;
+    procedure DoClick; virtual;
+    procedure DoDblClick; virtual;
     procedure Loaded; override;
     procedure Resize; override;
     procedure CalcRowsCols; virtual;
@@ -1473,6 +1461,7 @@ begin
   if Message.Inserting and (Message.Control <> Nil) and (Message.Control is TCustomTileControl) then begin
     TCustomTileControl(Message.Control).Align:=alNone;
     TCustomTileControl(Message.Control).Anchors:=[];
+{
     TCustomTileControl(Message.Control).OnClick:=ControlClick;
     TCustomTileControl(Message.Control).OnDblClick:=ControlDblClick;
     TCustomTileControl(Message.Control).OnPaint:=ControlPaint;
@@ -1481,6 +1470,7 @@ begin
     TCustomTileControl(Message.Control).OnMouseUp:=ControlMouseUp;
     TCustomTileControl(Message.Control).OnMouseEnter:=ControlMouseEnter;
     TCustomTileControl(Message.Control).OnMouseLeave:=ControlMouseLeave;
+}
     //
     if not (csLoading in Owner.ComponentState){ and not (csDesigning in Owner.ComponentState)} then
       FControlsCollection.AddTileControl(TCustomTileControl(Message.Control));
@@ -1491,6 +1481,7 @@ procedure TTileBox.CMControlChange(var Message: TCMControlChange);
 begin
   inherited;
   if not Message.Inserting and (Message.Control <> Nil) and (Message.Control is TCustomTileControl) and (Message.Control.Parent = Self) then begin
+{
     TCustomTileControl(Message.Control).OnClick:=Nil;
     TCustomTileControl(Message.Control).OnDblClick:=Nil;
     TCustomTileControl(Message.Control).OnPaint:=Nil;
@@ -1499,6 +1490,7 @@ begin
     TCustomTileControl(Message.Control).OnMouseUp:=Nil;
     TCustomTileControl(Message.Control).OnMouseEnter:=Nil;
     TCustomTileControl(Message.Control).OnMouseLeave:=Nil;
+}
     FControlsCollection.RemoveTileControl(TCustomTileControl(Message.Control));
   end;
 end;
@@ -1644,299 +1636,6 @@ end;
 //  Result:=AnsiCompareText(S1, S2);
 //end;
 
-procedure TTileBox.ControlClick(Sender: TObject);
-begin
-  MakeVisible(TTileControl(Sender).BoundsRect);
-
-  if TabStop and not Focused then
-    SetFocus;
-
-//  ActiveControl:=TTileControl(Sender);
-  TileControlIndex:=IndexOfTileControl(TTileControl(Sender));
-  //TileControlIndex:=TTileControl(Sender).ControlsCollectionIndex;
-  UpdateControls(True);
-  DoClick(ActiveControl);
-end;
-
-procedure TTileBox.ControlDblClick(Sender: TObject);
-begin
-  MakeVisible(TTileControl(Sender).BoundsRect);
-
-  if TabStop and not Focused then
-    SetFocus;
-
-//  ActiveControl:=TTileControl(Sender);
-  TileControlIndex:=IndexOfTileControl(TTileControl(Sender));
-  //TileControlIndex:=TTileControl(Sender).ControlsCollectionIndex;
-  UpdateControls(True);
-  DoDblClick(ActiveControl);
-end;
-
-procedure TTileBox.ControlMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var
-  Tile: TTileControl;
-  PopupPoint: TPoint;
-begin
-  Tile:=TTileControl(Sender);
-
-  if Tile = Nil then
-    Exit;
-
-  if Button = mbLeft then begin
-    if FMultiselect then begin
-      if ssCtrl in Shift then
-        SetSelected(Tile)
-      else begin
-        if LastControlClicked = Tile then
-          Exit;
-
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
-      end;
-    end
-    else begin
-      LastControlClicked:=Tile;
-//      ClearSelection(True);
-      Tile.Hovered:=False;
-      Tile.Invalidate;
-    end;
-  end
-  else if Button = mbRight then begin
-    if not FMultiselect then begin
-      MakeVisible(Tile.BoundsRect);
-
-      if TabStop and not Focused then
-        SetFocus;
-
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
-
-      if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
-    end
-    else begin
-      if ssCtrl in Shift then
-        SetSelected(Tile, False)
-      else begin
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
-      end;
-
-      MakeVisible(Tile.BoundsRect);
-
-      if TabStop and not Focused then
-        SetFocus;
-
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
-
-      if FSelectedControls.Count > 1 then begin
-        if Assigned(FOnPopupMulti) then
-          OnPopupMulti(Self);
-
-        PopupPoint:=Tile.ClientToScreen(Point(X, Y));
-
-        if Assigned(MultiselectPopupMenu) then
-          MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
-      end
-      else if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
-    end;
-  end;
-end;
-
-procedure TTileBox.ControlMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-begin
-
-end;
-
-procedure TTileBox.ControlMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var
-  Tile: TTileControl;
-  PopupPoint: TPoint;
-begin
-  Tile:=TTileControl(Sender);
-
-  if (Tile = Nil) or Tile.InDragMode then
-    Exit;
-
-  if Button = mbLeft then begin
-    if FMultiselect then begin
-      if ssCtrl in Shift then
-        SetSelected(Tile)
-      else begin
-        if LastControlClicked = Tile then
-          Exit;
-
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
-      end;
-    end
-    else if (LastControlClicked <> Nil) and (LastControlClicked = Tile) then begin
-      LastControlClicked:=Nil;
-//      ClearSelection(True);
-      Tile.Hovered:=True;
-      Tile.Invalidate;
-    end;
-  end
-  else if Button = mbRight then begin
-    if not FMultiselect then begin
-      MakeVisible(Tile.BoundsRect);
-
-      if TabStop and not Focused then
-        SetFocus;
-
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
-
-      if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
-    end
-    else begin
-      if ssCtrl in Shift then
-        SetSelected(Tile, False)
-      else begin
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
-      end;
-
-      MakeVisible(Tile.BoundsRect);
-
-      if TabStop and not Focused then
-        SetFocus;
-
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
-
-      if FSelectedControls.Count > 1 then begin
-        if Assigned(FOnPopupMulti) then
-          OnPopupMulti(Self);
-
-        PopupPoint:=Tile.ClientToScreen(Point(X, Y));
-
-        if Assigned(MultiselectPopupMenu) then
-          MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
-      end
-      else if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
-    end;
-  end;
-end;
-
-procedure TTileBox.ControlPaint(const Sender: TCustomTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect);
-var
-  Sel: TTileControlDrawState;
-  StdPaint: Boolean;
-//  cm: TCopyMode;
-begin
-  ControlPainting:=True;
-  try
-    Sel:=cdsNormal;
-
-    if not FMultiselect then begin
-      if (ActiveControl <> Nil) and (Sender = ActiveControl) then begin
-        Sel:=cdsSelected;
-        if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
-          Sel:=cdsSelFocused;
-      end
-      else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
-        Sel:=cdsFocused;
-    end
-    else begin
-      if FSelectedControls.IndexOf(TTileControl(Sender)) >= 0 then begin
-        Sel:=cdsSelected;
-        if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
-          Sel:=cdsSelFocused;
-      end
-      else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
-        Sel:=cdsFocused;
-    end;
-
-    if not Assigned(FControlPaint) then begin
-      if (Sel = cdsSelected) or (Sel = cdsSelFocused) then
-        TargetCanvas.Brush.Color:=SelectedColor
-      else
-        TargetCanvas.Brush.Color:=TTileControl(Sender).Color;
-      DrawControl(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
-      if (Sel = cdsFocused) or (Sel = cdsSelFocused) then begin
-  //      cm:=TargetCanvas.CopyMode;
-  //      try
-  //        TargetCanvas.CopyMode:=cmMergePaint;
-  //        TargetCanvas.Brush.Color:=SelectedColor;
-          TargetCanvas.Brush.Style:=bsClear;
-          TargetCanvas.Pen.Color:=SelectedColor;
-          TargetCanvas.Pen.Mode:=pmMask;
-          TargetCanvas.Pen.Style:=psInsideFrame;
-          TargetCanvas.Pen.Width:=Max(TargetRect.Right - TargetRect.Left, TargetRect.Bottom - TargetRect.Top) div 2;
-          TargetCanvas.Rectangle(TargetRect);
-          //TargetCanvas.DrawFocusRect(TargetRect);
-  //      finally
-  //        TargetCanvas.CopyMode:=cm;
-  //      end;
-      end;
-      if TTileControl(Sender).Hovered then begin
-        TargetCanvas.Brush.Style:=bsClear;
-        TargetCanvas.Pen.Color:=HoverColor;
-        TargetCanvas.Pen.Mode:=pmMerge;
-        TargetCanvas.Pen.Style:=psInsideFrame;
-        TargetCanvas.Pen.Width:=2;
-        TargetCanvas.Rectangle(TargetRect);
-      end;
-    end
-    else begin
-      StdPaint:=False;
-      if Assigned(FControlPaintBkgnd) then
-        OnControlPaintBkgnd(TTileControl(Sender), TargetCanvas, TargetRect, Sel, StdPaint);
-      if StdPaint then begin
-        DrawControl(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
-        if (Sel = cdsFocused) or (Sel = cdsSelFocused) then begin
-    //      cm:=TargetCanvas.CopyMode;
-    //      try
-    //        TargetCanvas.CopyMode:=cmMergePaint;
-            TargetCanvas.Brush.Style:=bsSolid;
-            TargetCanvas.Pen.Color:=SelectedColor;
-            TargetCanvas.Pen.Mode:=pmMerge;
-            TargetCanvas.Pen.Style:=psSolid;
-            TargetCanvas.Pen.Width:=1;
-            TargetCanvas.FillRect(TargetRect);
-            //TargetCanvas.DrawFocusRect(TargetRect);
-    //      finally
-    //        TargetCanvas.CopyMode:=cm;
-    //      end;
-        end;
-        if TTileControl(Sender).Hovered then begin
-          TargetCanvas.Brush.Style:=bsClear;
-          TargetCanvas.Pen.Color:=HoverColor;
-          TargetCanvas.Pen.Mode:=pmMerge;
-          TargetCanvas.Pen.Style:=psInsideFrame;
-          TargetCanvas.Pen.Width:=2;
-          TargetCanvas.Rectangle(TargetRect);
-        end;
-      end
-      else
-        OnControlPaint(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
-    end;
-  finally
-    ControlPainting:=False;
-  end;
-end;
-
 procedure TTileBox.ControlsAligned;
 
   procedure ShowScrollBar(const ScrollBar: TControlScrollBar);
@@ -1965,48 +1664,6 @@ begin
     else
       ShowScrollBar(HorzScrollBar);
   end;
-end;
-
-procedure TTileBox.ControlMouseEnter(Sender: TObject);
-var
-  Tile: TTileControl;
-//  DrawState: TTileControlDrawState;
-begin
-  Tile:=TTileControl(Sender);
-
-  if Tile = Nil then
-    Exit;
-
-//  DrawState:=GetControlDrawState(IndexOfTileControl(Tile));
-//  case DrawState of
-//    cdsNormal: DrawState:=cdsHovered;
-//    cdsSelected: DrawState:=cdsSelectedHovered;
-//    cdsFocused: DrawState:=cdsFocusedHovered;
-//    cdsSelFocused: DrawState:=cdsSelFocusedHovered;
-//  end;
-
-  Tile.Hovered:=True;
-end;
-
-procedure TTileBox.ControlMouseLeave(Sender: TObject);
-var
-  Tile: TTileControl;
-//  DrawState: TTileControlDrawState;
-begin
-  Tile:=TTileControl(Sender);
-
-  if Tile = Nil then
-    Exit;
-
-//  DrawState:=GetControlDrawState(IndexOfTileControl(Tile));
-//  case DrawState of
-//    cdsHovered: DrawState:=cdsNormal;
-//    cdsSelectedHovered: DrawState:=cdsSelected;
-//    cdsFocusedHovered: DrawState:=cdsFocused;
-//    cdsSelFocusedHovered: DrawState:=cdsSelFocused;
-//  end;
-
-  Tile.Hovered:=False;
 end;
 
 constructor TTileBox.Create(AOwner: TComponent);
@@ -2074,16 +1731,16 @@ begin
 //
 end;
 
-procedure TTileBox.DoClick(const Control: TTileControl);
+procedure TTileBox.DoClick;
 begin
   if Assigned(FOnControlClick) then
-    FOnControlClick(Self, Control, TileControlIndex);
+    FOnControlClick(Self, ActiveControl, TileControlIndex);
 end;
 
-procedure TTileBox.DoDblClick(const Control: TTileControl);
+procedure TTileBox.DoDblClick;
 begin
   if Assigned(FOnControlDblClick) then
-    FOnControlDblClick(Self, Control, TileControlIndex);
+    FOnControlDblClick(Self, ActiveControl, TileControlIndex);
 end;
 
 procedure TTileBox.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);

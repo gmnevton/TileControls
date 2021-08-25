@@ -41,6 +41,7 @@ contains
   TileUtils in 'TileUtils.pas',
   TileBox in 'TileBox.pas',
   TileControl in 'TileControl.pas',
-  TileControlDrag in 'TileControlDrag.pas';
+  TileControlDrag in 'TileControlDrag.pas',
+  TileControlEvents in 'TileControlEvents.pas';
 
 end.

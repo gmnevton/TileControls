@@ -93,6 +93,7 @@
         <DCCReference Include="TileBox.pas"/>
         <DCCReference Include="TileControl.pas"/>
         <DCCReference Include="TileControlDrag.pas"/>
+        <DCCReference Include="TileControlEvents.pas"/>
         <BuildConfiguration Include="Debug">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -157,7 +158,7 @@
                 <Platform value="Win32">True</Platform>
             </Platforms>
             <Deployment Version="3">
-                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\20.0\Bpl\TileControls.bpl" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\19.0\Bpl\TileControls.bpl" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>TileControls.bpl</RemoteName>
                         <Overwrite>true</Overwrite>
