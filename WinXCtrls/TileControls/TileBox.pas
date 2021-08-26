@@ -174,8 +174,9 @@ type
     FGroupIndent: Word;
 //    FGroupWidth: Byte;
     //
+    FActiveControl: TTileControl;
+    //
     WheelAccumulator: Integer;
-    ActiveControl: TTileControl;
     Updating: Boolean;
     ControlPainting: Boolean;
     DragMode: TTileBoxDragMode;
@@ -185,7 +186,6 @@ type
     procedure SetSelectedColor(const Value: TColor);
     procedure SetHoverColor(const Value: TColor);
     procedure SetMultiselect(const Value: Boolean);
-    procedure SetSelected(const Control: TTileControl; const CanDeselect: Boolean = True);
     procedure SetOrientation(const Value: TScrollBarKind);
     procedure SetControlIndex(const Value: Integer);
     procedure SetTileControl(Index: Integer; const Control: TTileControl);
@@ -213,6 +213,9 @@ type
     DoUpdate: Boolean;
     LastControlClicked: TTileControl;
     FDragObject: TTileDragObject;
+
+    procedure SetActiveControl(const Value: TTileControl);
+    procedure SetSelected(const Control: TTileControl; const CanDeselect: Boolean = True);
 
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
 //    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
@@ -258,8 +261,10 @@ type
     procedure Clear;
     function RemoveTile(var Tile: TTileControl): Boolean;
 
+    property ActiveControl: TTileControl read FActiveControl write SetActiveControl;
     property ColCount: Integer read FColCount;
     property RowCount: Integer read FRowCount;
+    property SelectedCount: Integer read GetSelectedCount;
     property TileControl[Index: Integer]: TTileControl read GetTileControl write SetTileControl stored False; default;
     property TileControlIndex: Integer read FControlIndex write SetControlIndex default -1;
     property TileControlsCount: Integer read GetControlsCount;
@@ -1684,6 +1689,7 @@ begin
 //  FullRepaint:=True;
   FMultiselect:=False;
   LastControlClicked:=Nil;
+  FActiveControl:=Nil;
   FControlIndex:=-1;
   FIndentHorz:=32;
   FIndentVert:=24;
@@ -2542,6 +2548,12 @@ begin
   CalcScrollBar(VertScrollBar);
 end;
 
+procedure TTileBox.SetActiveControl(const Value: TTileControl);
+begin
+//  if FActiveControl <> Value then
+    FActiveControl:=Value;
+end;
+
 procedure TTileBox.SetBorderStyle(Value: TBorderStyle);
 begin
   if Value <> FBorderStyle then begin
@@ -2721,6 +2733,8 @@ procedure TTileBox.SetSelected(const Control: TTileControl; const CanDeselect: B
 var
   LastActiveControl: TTileControl;
 begin
+
+
   if Control = Nil then
     Exit;
 

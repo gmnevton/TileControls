@@ -526,7 +526,7 @@ begin
   FText2:=TTileText.Create(Self);
   FText3:=TTileText.Create(Self);
   FText4:=TTileText.Create(Self);
-  FControlEvents:=TTileControlEvents.Create(TWinControl(Owner));
+  FControlEvents:=TTileControlEvents.Create(TWinControl(Owner), Self);
 end;
 
 destructor TCustomTileControl.Destroy;
@@ -542,13 +542,13 @@ end;
 
 procedure TCustomTileControl.Click;
 begin
-  FControlEvents.ControlClick(Self);
+  FControlEvents.ControlClick;
   inherited;
 end;
 
 procedure TCustomTileControl.DblClick;
 begin
-  FControlEvents.ControlDblClick(Self);
+  FControlEvents.ControlDblClick;
   inherited;
 end;
 
@@ -711,7 +711,7 @@ begin
       else
         FullRepaint;
     end;
-    FControlEvents.ControlPaint(Self, LCanvas, Self.ClientRect);
+    FControlEvents.ControlPaint(LCanvas, Self.ClientRect);
     if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then
       OnPaint(Self, LCanvas, Self.ClientRect)
   finally

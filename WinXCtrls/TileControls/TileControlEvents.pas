@@ -12,23 +12,27 @@ uses
 type
   TTileControlEvents = class
   private
-    FOwner: TWinControl;
+    // FTileBox is TTileBox, but to avoid circular unit reference, we need to do it like that
+    FTileBox: TWinControl;
+    // FTileControl is TTileControl, but to avoid circular unit reference, we need to do it like that
+    FTileControl: TControl;
   protected
-    property Owner: TWinControl read FOwner;
+    property TileBox: TWinControl read FTileBox;
+    property Control: TControl read FTileControl;
   public
-    constructor Create(const AOwner: TWinControl);
+    constructor Create(const ATileBox: TWinControl; const AControl: TControl);
     destructor Destroy; override;
     //
-    procedure ControlClick(Ctrl: TControl);
-    procedure ControlDblClick(Ctrl: TControl);
+    procedure ControlClick;
+    procedure ControlDblClick;
     //
-    procedure ControlMouseDown(Ctrl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseEnter(Ctrl: TControl);
-    procedure ControlMouseLeave(Ctrl: TControl);
-    procedure ControlMouseMove(Ctrl: TControl; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseUp(Ctrl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ControlMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ControlMouseEnter;
+    procedure ControlMouseLeave;
+    procedure ControlMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure ControlMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     //
-    procedure ControlPaint(Ctrl: TControl; TargetCanvas: TCanvas; TargetRect: TRect);
+    procedure ControlPaint(TargetCanvas: TCanvas; TargetRect: TRect);
   end;
 
 implementation
@@ -42,144 +46,137 @@ type
 
 { TTileControlEvents }
 
-constructor TTileControlEvents.Create(const AOwner: TWinControl);
+constructor TTileControlEvents.Create(const ATileBox: TWinControl; const AControl: TControl);
 begin
-  FOwner:=AOwner;
+  FTileBox:=ATileBox;
+  FTileControl:=AControl;
 end;
 
 destructor TTileControlEvents.Destroy;
 begin
-  FOwner:=Nil;
+  FTileControl:=Nil;
+  FTileBox:=Nil;
   inherited;
 end;
 
-procedure TTileControlEvents.ControlClick(Ctrl: TControl);
+procedure TTileControlEvents.ControlClick;
 var
   Tile: TTileControl;
 begin
-  Tile:=TTileControl(Ctrl);
+  Tile:=TTileControl(Control);
 
-  if Tile = Nil then
-    Exit;
+  TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-  TTileBoxAccess(Owner).MakeVisible(Tile.BoundsRect);
-
-  if Owner.TabStop and not Owner.Focused then
-    Owner.SetFocus;
+  if TileBox.TabStop and not TileBox.Focused then
+    TileBox.SetFocus;
 
 //  ActiveControl:=TTileControl(Sender);
 //  TileControlIndex:=IndexOfTileControl(TTileControl(Ctrl));
-  TTileBoxAccess(Owner).TileControlIndex:=Tile.ControlsCollectionIndex;
-  TTileBoxAccess(Owner).UpdateControls(True);
-  TTileBoxAccess(Owner).DoClick;
+  TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+  TTileBoxAccess(TileBox).UpdateControls(True);
+  TTileBoxAccess(TileBox).DoClick;
 end;
 
-procedure TTileControlEvents.ControlDblClick(Ctrl: TControl);
+procedure TTileControlEvents.ControlDblClick;
 var
   Tile: TTileControl;
 begin
-  Tile:=TTileControl(Ctrl);
+  Tile:=TTileControl(Control);
 
-  if Tile = Nil then
-    Exit;
+  TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-  TTileBoxAccess(Owner).MakeVisible(Tile.BoundsRect);
-
-  if Owner.TabStop and not Owner.Focused then
-    Owner.SetFocus;
+  if TileBox.TabStop and not TileBox.Focused then
+    TileBox.SetFocus;
 
 //  ActiveControl:=TTileControl(Sender);
   //TileControlIndex:=IndexOfTileControl(TTileControl(Sender));
-  TTileBoxAccess(Owner).TileControlIndex:=Tile.ControlsCollectionIndex;
-  TTileBoxAccess(Owner).UpdateControls(True);
-  TTileBoxAccess(Owner).DoDblClick;
+  TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+  TTileBoxAccess(TileBox).UpdateControls(True);
+  TTileBoxAccess(TileBox).DoDblClick;
 end;
 
-procedure TTileControlEvents.ControlMouseDown(Ctrl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TTileControlEvents.ControlMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   Tile: TTileControl;
   PopupPoint: TPoint;
 begin
-  Tile:=TTileControl(Ctrl);
-
-  if Tile = Nil then
-    Exit;
+  Tile:=TTileControl(Control);
 
   if Button = mbLeft then begin
-    if FMultiselect then begin
+    if TTileBoxAccess(TileBox).Multiselect then begin
       if ssCtrl in Shift then
-        SetSelected(Tile)
+        TTileBoxAccess(TileBox).SetSelected(Tile)
       else begin
-        if LastControlClicked = Tile then
+        if TTileBoxAccess(TileBox).LastControlClicked = Tile then
           Exit;
 
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
+        TTileBoxAccess(TileBox).ClearSelection();
+        TTileBoxAccess(TileBox).SetSelected(Tile);
+        TTileBoxAccess(TileBox).LastControlClicked:=Tile;
       end;
     end
     else begin
-      LastControlClicked:=Tile;
-//      ClearSelection(True);
+      TTileBoxAccess(TileBox).LastControlClicked:=Tile;
+//      TTileBoxAccess(TileBox).ClearSelection(True);
       Tile.Hovered:=False;
       Tile.Invalidate;
     end;
   end
   else if Button = mbRight then begin
-    if not FMultiselect then begin
-      MakeVisible(Tile.BoundsRect);
+    if not TTileBoxAccess(TileBox).Multiselect then begin
+      TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-      if TabStop and not Focused then
-        SetFocus;
+      if TileBox.TabStop and not TileBox.Focused then
+        TileBox.SetFocus;
 
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
+      TTileBoxAccess(TileBox).ActiveControl:=Tile;
+      //TileControlIndex:=IndexOfTileControl(ActiveControl);
+      TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+      TTileBoxAccess(TileBox).UpdateControls(True);
 
-      if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
+      if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+        TTileBoxAccess(TileBox).OnPopup(Self);
     end
     else begin
       if ssCtrl in Shift then
-        SetSelected(Tile, False)
+        TTileBoxAccess(TileBox).SetSelected(Tile, False)
       else begin
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
+        TTileBoxAccess(TileBox).ClearSelection();
+        TTileBoxAccess(TileBox).SetSelected(Tile);
+        TTileBoxAccess(TileBox).LastControlClicked:=Tile;
       end;
 
-      MakeVisible(Tile.BoundsRect);
+      TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-      if TabStop and not Focused then
-        SetFocus;
+      if TileBox.TabStop and not TileBox.Focused then
+        TileBox.SetFocus;
 
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
+      TTileBoxAccess(TileBox).ActiveControl:=Tile;
+      //TileControlIndex:=IndexOfTileControl(ActiveControl);
+      TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+      TTileBoxAccess(TileBox).UpdateControls(True);
 
-      if FSelectedControls.Count > 1 then begin
-        if Assigned(FOnPopupMulti) then
-          OnPopupMulti(Self);
+      if TTileBoxAccess(TileBox).SelectedCount > 1 then begin
+        if Assigned(TTileBoxAccess(TileBox).OnPopupMulti) then
+          TTileBoxAccess(TileBox).OnPopupMulti(Self);
 
         PopupPoint:=Tile.ClientToScreen(Point(X, Y));
 
-        if Assigned(MultiselectPopupMenu) then
-          MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
+        if Assigned(TTileBoxAccess(TileBox).MultiselectPopupMenu) then
+          TTileBoxAccess(TileBox).MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
       end
-      else if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
+      else if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+        TTileBoxAccess(TileBox).OnPopup(Self);
     end;
   end;
 end;
 
-procedure TTileControlEvents.ControlMouseEnter(Ctrl: TControl);
+procedure TTileControlEvents.ControlMouseEnter;
 var
   Tile: TTileControl;
 //  DrawState: TTileControlDrawState;
 begin
-  Tile:=TTileControl(Sender);
+  Tile:=TTileControl(Control);
 
   if Tile = Nil then
     Exit;
@@ -195,12 +192,12 @@ begin
   Tile.Hovered:=True;
 end;
 
-procedure TTileControlEvents.ControlMouseLeave(Ctrl: TControl);
+procedure TTileControlEvents.ControlMouseLeave;
 var
   Tile: TTileControl;
 //  DrawState: TTileControlDrawState;
 begin
-  Tile:=TTileControl(Sender);
+  Tile:=TTileControl(Control);
 
   if Tile = Nil then
     Exit;
@@ -216,97 +213,97 @@ begin
   Tile.Hovered:=False;
 end;
 
-procedure TTileControlEvents.ControlMouseMove(Ctrl: TControl; Shift: TShiftState; X, Y: Integer);
+procedure TTileControlEvents.ControlMouseMove(Shift: TShiftState; X, Y: Integer);
 begin
 
 end;
 
-procedure TTileControlEvents.ControlMouseUp(Ctrl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TTileControlEvents.ControlMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   Tile: TTileControl;
   PopupPoint: TPoint;
 begin
-  Tile:=TTileControl(Sender);
+  Tile:=TTileControl(Control);
 
   if (Tile = Nil) or Tile.InDragMode then
     Exit;
 
   if Button = mbLeft then begin
-    if FMultiselect then begin
+    if TTileBoxAccess(TileBox).Multiselect then begin
       if ssCtrl in Shift then
-        SetSelected(Tile)
+        TTileBoxAccess(TileBox).SetSelected(Tile)
       else begin
-        if LastControlClicked = Tile then
+        if TTileBoxAccess(TileBox).LastControlClicked = Tile then
           Exit;
 
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
+        TTileBoxAccess(TileBox).ClearSelection();
+        TTileBoxAccess(TileBox).SetSelected(Tile);
+        TTileBoxAccess(TileBox).LastControlClicked:=Tile;
       end;
     end
-    else if (LastControlClicked <> Nil) and (LastControlClicked = Tile) then begin
-      LastControlClicked:=Nil;
+    else if (TTileBoxAccess(TileBox).LastControlClicked <> Nil) and (TTileBoxAccess(TileBox).LastControlClicked = Tile) then begin
+      TTileBoxAccess(TileBox).LastControlClicked:=Nil;
 //      ClearSelection(True);
       Tile.Hovered:=True;
       Tile.Invalidate;
     end;
   end
   else if Button = mbRight then begin
-    if not FMultiselect then begin
-      MakeVisible(Tile.BoundsRect);
+    if not TTileBoxAccess(TileBox).Multiselect then begin
+      TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-      if TabStop and not Focused then
-        SetFocus;
+      if TileBox.TabStop and not TileBox.Focused then
+        TileBox.SetFocus;
 
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
+      TTileBoxAccess(TileBox).ActiveControl:=Tile;
+      //TileControlIndex:=IndexOfTileControl(ActiveControl);
+      TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+      TTileBoxAccess(TileBox).UpdateControls(True);
 
-      if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
+      if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+        TTileBoxAccess(TileBox).OnPopup(Self);
     end
     else begin
       if ssCtrl in Shift then
-        SetSelected(Tile, False)
+        TTileBoxAccess(TileBox).SetSelected(Tile, False)
       else begin
-        ClearSelection();
-        SetSelected(Tile);
-        LastControlClicked:=Tile;
+        TTileBoxAccess(TileBox).ClearSelection();
+        TTileBoxAccess(TileBox).SetSelected(Tile);
+        TTileBoxAccess(TileBox).LastControlClicked:=Tile;
       end;
 
-      MakeVisible(Tile.BoundsRect);
+      TTileBoxAccess(TileBox).MakeVisible(Tile.BoundsRect);
 
-      if TabStop and not Focused then
-        SetFocus;
+      if TileBox.TabStop and not TileBox.Focused then
+        TileBox.SetFocus;
 
-      ActiveControl:=Tile;
-      TileControlIndex:=IndexOfTileControl(ActiveControl);
-      //TileControlIndex:=TTileControl(ActiveControl).ControlsCollectionIndex;
-      UpdateControls(True);
+      TTileBoxAccess(TileBox).ActiveControl:=Tile;
+      //TileControlIndex:=IndexOfTileControl(ActiveControl);
+      TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
+      TTileBoxAccess(TileBox).UpdateControls(True);
 
-      if FSelectedControls.Count > 1 then begin
-        if Assigned(FOnPopupMulti) then
-          OnPopupMulti(Self);
+      if TTileBoxAccess(TileBox).SelectedCount > 1 then begin
+        if Assigned(TTileBoxAccess(TileBox).OnPopupMulti) then
+          TTileBoxAccess(TileBox).OnPopupMulti(Self);
 
         PopupPoint:=Tile.ClientToScreen(Point(X, Y));
 
-        if Assigned(MultiselectPopupMenu) then
-          MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
+        if Assigned(TTileBoxAccess(TileBox).MultiselectPopupMenu) then
+          TTileBoxAccess(TileBox).MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
       end
-      else if Assigned(Tile.PopupMenu) and Assigned(FOnPopup) then
-        OnPopup(Self);
+      else if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+        TTileBoxAccess(TileBox).OnPopup(Self);
     end;
   end;
 end;
 
-procedure TTileControlEvents.ControlPaint(Ctrl: TControl; TargetCanvas: TCanvas; TargetRect: TRect);
+procedure TTileControlEvents.ControlPaint(TargetCanvas: TCanvas; TargetRect: TRect);
 var
   Sel: TTileControlDrawState;
   StdPaint: Boolean;
 //  cm: TCopyMode;
 begin
-  ControlPainting:=True;
+  TTileBoxAccess(TileBox).ControlPainting:=True;
   try
     Sel:=cdsNormal;
 
