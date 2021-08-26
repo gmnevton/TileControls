@@ -38,6 +38,7 @@ type
 implementation
 
 uses
+  Math,
   TileBox,
   TileControl;
 
@@ -134,7 +135,7 @@ begin
       TTileBoxAccess(TileBox).TileControlIndex:=Tile.ControlsCollectionIndex;
       TTileBoxAccess(TileBox).UpdateControls(True);
 
-      if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+      if (Tile.PopupMenu <> Nil) and (TTileBoxAccess(TileBox).OnPopup <> Nil) then // make IsOnPopupAssigned
         TTileBoxAccess(TileBox).OnPopup(Self);
     end
     else begin
@@ -157,15 +158,15 @@ begin
       TTileBoxAccess(TileBox).UpdateControls(True);
 
       if TTileBoxAccess(TileBox).SelectedCount > 1 then begin
-        if Assigned(TTileBoxAccess(TileBox).OnPopupMulti) then
+        if (TTileBoxAccess(TileBox).OnPopupMulti <> Nil) then
           TTileBoxAccess(TileBox).OnPopupMulti(Self);
 
         PopupPoint:=Tile.ClientToScreen(Point(X, Y));
 
-        if Assigned(TTileBoxAccess(TileBox).MultiselectPopupMenu) then
+        if (TTileBoxAccess(TileBox).MultiselectPopupMenu <> Nil) then
           TTileBoxAccess(TileBox).MultiselectPopupMenu.Popup(PopupPoint.X, PopupPoint.Y);
       end
-      else if Assigned(Tile.PopupMenu) and Assigned(TTileBoxAccess(TileBox).OnPopup) then
+      else if (Tile.PopupMenu <> Nil) and (TTileBoxAccess(TileBox).OnPopup <> Nil) then
         TTileBoxAccess(TileBox).OnPopup(Self);
     end;
   end;
@@ -177,9 +178,6 @@ var
 //  DrawState: TTileControlDrawState;
 begin
   Tile:=TTileControl(Control);
-
-  if Tile = Nil then
-    Exit;
 
 //  DrawState:=GetControlDrawState(IndexOfTileControl(Tile));
 //  case DrawState of
@@ -198,9 +196,6 @@ var
 //  DrawState: TTileControlDrawState;
 begin
   Tile:=TTileControl(Control);
-
-  if Tile = Nil then
-    Exit;
 
 //  DrawState:=GetControlDrawState(IndexOfTileControl(Tile));
 //  case DrawState of
@@ -299,50 +294,53 @@ end;
 
 procedure TTileControlEvents.ControlPaint(TargetCanvas: TCanvas; TargetRect: TRect);
 var
+  Tile: TTileControl;
   Sel: TTileControlDrawState;
   StdPaint: Boolean;
 //  cm: TCopyMode;
 begin
+  Tile:=TTileControl(Control);
+
   TTileBoxAccess(TileBox).ControlPainting:=True;
   try
     Sel:=cdsNormal;
 
-    if not FMultiselect then begin
-      if (ActiveControl <> Nil) and (Sender = ActiveControl) then begin
+    if not TTileBoxAccess(TileBox).Multiselect then begin
+      if (TTileBoxAccess(TileBox).ActiveControl <> Nil) and (Control = TTileBoxAccess(TileBox).ActiveControl) then begin
         Sel:=cdsSelected;
-        if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
+        //if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+        if Tile.ControlsCollectionIndex = TTileBoxAccess(TileBox).TileControlIndex then
           Sel:=cdsSelFocused;
       end
-      else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
+      //else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+      else if Tile.ControlsCollectionIndex = TTileBoxAccess(TileBox).TileControlIndex then
         Sel:=cdsFocused;
     end
     else begin
-      if FSelectedControls.IndexOf(TTileControl(Sender)) >= 0 then begin
+      if TTileBoxAccess(TileBox).SelectedControls.IndexOf(Tile) >= 0 then begin
         Sel:=cdsSelected;
-        if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-        //if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
+        //if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+        if Tile.ControlsCollectionIndex = TTileBoxAccess(TileBox).TileControlIndex then
           Sel:=cdsSelFocused;
       end
-      else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
-      //else if TTileControl(Sender).ControlsCollectionIndex = FControlIndex then
+      //else if IndexOfTileControl(TTileControl(Sender)) = FControlIndex then
+      else if Tile.ControlsCollectionIndex = TTileBoxAccess(TileBox).TileControlIndex then
         Sel:=cdsFocused;
     end;
 
-    if not Assigned(FControlPaint) then begin
+    if not Assigned(TTileBoxAccess(TileBox).OnControlPaint) then begin
       if (Sel = cdsSelected) or (Sel = cdsSelFocused) then
-        TargetCanvas.Brush.Color:=SelectedColor
+        TargetCanvas.Brush.Color:=TTileBoxAccess(TileBox).SelectedColor
       else
-        TargetCanvas.Brush.Color:=TTileControl(Sender).Color;
-      DrawControl(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
+        TargetCanvas.Brush.Color:=Tile.Color;
+      TTileBoxAccess(TileBox).DrawControl(Tile, TargetCanvas, TargetRect, Sel);
       if (Sel = cdsFocused) or (Sel = cdsSelFocused) then begin
   //      cm:=TargetCanvas.CopyMode;
   //      try
   //        TargetCanvas.CopyMode:=cmMergePaint;
   //        TargetCanvas.Brush.Color:=SelectedColor;
           TargetCanvas.Brush.Style:=bsClear;
-          TargetCanvas.Pen.Color:=SelectedColor;
+          TargetCanvas.Pen.Color:=TTileBoxAccess(TileBox).SelectedColor;
           TargetCanvas.Pen.Mode:=pmMask;
           TargetCanvas.Pen.Style:=psInsideFrame;
           TargetCanvas.Pen.Width:=Max(TargetRect.Right - TargetRect.Left, TargetRect.Bottom - TargetRect.Top) div 2;
@@ -352,9 +350,9 @@ begin
   //        TargetCanvas.CopyMode:=cm;
   //      end;
       end;
-      if TTileControl(Sender).Hovered then begin
+      if Tile.Hovered then begin
         TargetCanvas.Brush.Style:=bsClear;
-        TargetCanvas.Pen.Color:=HoverColor;
+        TargetCanvas.Pen.Color:=TTileBoxAccess(TileBox).HoverColor;
         TargetCanvas.Pen.Mode:=pmMerge;
         TargetCanvas.Pen.Style:=psInsideFrame;
         TargetCanvas.Pen.Width:=2;
@@ -363,16 +361,16 @@ begin
     end
     else begin
       StdPaint:=False;
-      if Assigned(FControlPaintBkgnd) then
-        OnControlPaintBkgnd(TTileControl(Sender), TargetCanvas, TargetRect, Sel, StdPaint);
+      if Assigned(TTileBoxAccess(TileBox).OnControlPaintBkgnd) then
+        TTileBoxAccess(TileBox).OnControlPaintBkgnd(Tile, TargetCanvas, TargetRect, Sel, StdPaint);
       if StdPaint then begin
-        DrawControl(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
+        TTileBoxAccess(TileBox).DrawControl(Tile, TargetCanvas, TargetRect, Sel);
         if (Sel = cdsFocused) or (Sel = cdsSelFocused) then begin
     //      cm:=TargetCanvas.CopyMode;
     //      try
     //        TargetCanvas.CopyMode:=cmMergePaint;
             TargetCanvas.Brush.Style:=bsSolid;
-            TargetCanvas.Pen.Color:=SelectedColor;
+            TargetCanvas.Pen.Color:=TTileBoxAccess(TileBox).SelectedColor;
             TargetCanvas.Pen.Mode:=pmMerge;
             TargetCanvas.Pen.Style:=psSolid;
             TargetCanvas.Pen.Width:=1;
@@ -382,9 +380,9 @@ begin
     //        TargetCanvas.CopyMode:=cm;
     //      end;
         end;
-        if TTileControl(Sender).Hovered then begin
+        if Tile.Hovered then begin
           TargetCanvas.Brush.Style:=bsClear;
-          TargetCanvas.Pen.Color:=HoverColor;
+          TargetCanvas.Pen.Color:=TTileBoxAccess(TileBox).HoverColor;
           TargetCanvas.Pen.Mode:=pmMerge;
           TargetCanvas.Pen.Style:=psInsideFrame;
           TargetCanvas.Pen.Width:=2;
@@ -392,10 +390,11 @@ begin
         end;
       end
       else
-        OnControlPaint(TTileControl(Sender), TargetCanvas, TargetRect, Sel);
+        if Assigned(TTileBoxAccess(TileBox).OnControlPaint) then
+          TTileBoxAccess(TileBox).OnControlPaint(Tile, TargetCanvas, TargetRect, Sel);
     end;
   finally
-    ControlPainting:=False;
+    TTileBoxAccess(TileBox).ControlPainting:=False;
   end;
 end;
 

@@ -156,6 +156,8 @@ type
     FControlsMultiPopupMenu: TPopupMenu;
     FOnControlClick: TTilesBoxClickEvent;
     FOnControlDblClick: TTilesBoxDblClickEvent;
+    FOnPopup: TNotifyEvent;
+    FOnPopupMulti: TNotifyEvent;
     FSelectedColor: TColor;
     FHoverColor: TColor;
     FSelectedControls: TObjectList;
@@ -165,8 +167,6 @@ type
     FRowCount: Integer;
     FColCount: Integer;
     FOnChange: TNotifyEvent;
-    FOnPopup: TNotifyEvent;
-    FOnPopupMulti: TNotifyEvent;
     FSpacer: Word;
     FMouseInControl: Boolean;
     FIndentHorz: Word;
@@ -178,7 +178,6 @@ type
     //
     WheelAccumulator: Integer;
     Updating: Boolean;
-    ControlPainting: Boolean;
     DragMode: TTileBoxDragMode;
     SavedBkgndColor: TColor;
 
@@ -211,6 +210,7 @@ type
     procedure WMPrintClient(var Message: TWMPrintClient); message WM_PRINTCLIENT;
   protected
     DoUpdate: Boolean;
+    ControlPainting: Boolean;
     LastControlClicked: TTileControl;
     FDragObject: TTileDragObject;
 
@@ -246,6 +246,8 @@ type
     procedure DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
 //    function CompareStrings(const S1, S2: String): Integer; virtual;
     procedure WndProc(var Message: TMessage); override;
+    //
+    property SelectedControls: TObjectList read FSelectedControls; // ugly shortcut - to be refactored later
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -1700,7 +1702,14 @@ begin
   FColCount:=0;
 //  CalcRowsCols;
   FDragObject:=Nil;
+  FControlPaint:=Nil;
+  FControlPaintBkgnd:=Nil;
+  FControlMeasure:=Nil;
+  FControlsMultiPopupMenu:=Nil;
+  FOnControlClick:=Nil;
+  FOnControlDblClick:=Nil;
   DragMode:=dmNormal;
+
 
   VertScrollBar.Smooth:=True;
   VertScrollBar.Tracking:=True;
