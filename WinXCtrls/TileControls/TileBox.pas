@@ -1775,30 +1775,43 @@ procedure TTileBox.DragOver(Source: TObject; X, Y: Integer; State: TDragState; v
 var
   Tile: TCustomTileControl;
   idx: Integer;
-  drop_pt: TPoint;
+  pt: TPoint;
 begin
   Accept:=(Source is TTileBox) or (Source is TCustomTileControl) or (Source is TTileDragObject);
   if Accept then begin
     if State = dsDragEnter then begin
-      DragMode:=dmDragging;
-      SavedBkgndColor:=Color;
-      Color:=$002d2d2d;
+      if DragMode <> dmDragging then begin
+        DragMode:=dmDragging;
+        SavedBkgndColor:=Color;
+        Color:=$002d2d2d;
+      end;
     end
     else if State = dsDragMove then begin
-      drop_pt:=CalculateControlPos(Point(X, Y));
+      // here we have logic to move out columns or rows of Tiles from underneath of our dragging Tile
+      // this will be done in the future updates
+{
+      pt:=CalculateControlPos(Point(X, Y));
       if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
         Tile:=TCustomTileControl(TTileDragObject(Source).Control);
         //idx:=ControlsCollection.IndexOfTileControl(Tile);
         idx:=Tile.ControlsCollectionIndex;
         if idx > -1 then begin
-          ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+          ControlsCollection.Items[idx].SetPosition(pt.X, pt.Y);
           UpdateControls(True);
         end;
       end;
+}
     end
     else if State = dsDragLeave then begin
-      DragMode:=dmDraggingOutside;
-      Color:=SavedBkgndColor;
+      // we can't relay on (X, Y) values from parameters, because they are control related only, and we need to know where we are relative to whole screen
+      pt:=Mouse.CursorPos;
+      pt:=ScreenToClient(pt);
+      // so, here we have to determine if we are dragging ouside of TileBox or are we still inside
+      // if we are inside, than we do nothing
+      if not PtInRect(Rect(0, 0, ClientWidth, ClientHeight), pt) then begin
+        DragMode:=dmDraggingOutside;
+        Color:=SavedBkgndColor;
+      end;
     end;
   end;
 end;
@@ -1841,6 +1854,7 @@ procedure TTileBox.DoEndDrag(Target: TObject; X, Y: Integer);
 begin
   DragMode:=dmNormal;
   SharedEndDrag(Target, X, Y);
+  Color:=SavedBkgndColor;
 end;
 
 procedure TTileBox.SharedEndDrag(Target: TObject; X, Y: Integer);
