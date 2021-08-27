@@ -121,9 +121,10 @@ implementation
 
 procedure TForm1.Button1Click(Sender: TObject);
 var
-  Tile: TTileControl;
+//  Tile: TTileControl;
   Size: TTileSize;
 begin
+  Size:=tsCustom;
   if RadioButton1.Checked then
     Size:=tsSmall
   else if RadioButton2.Checked then
@@ -132,7 +133,8 @@ begin
     Size:=tsLarge
   else if RadioButton4.Checked then
     Size:=tsExtraLarge;
-  Tile:=TilesBoxControl1.AddTile(Size);
+  //Tile:=TilesBoxControl1.AddTile(Size);
+  TilesBoxControl1.AddTile(Size);
 end;
 
 end.

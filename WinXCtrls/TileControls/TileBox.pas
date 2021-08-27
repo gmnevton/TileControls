@@ -231,6 +231,10 @@ type
     procedure ControlsAligned; override;
     procedure DoClick; virtual;
     procedure DoDblClick; virtual;
+    procedure DoPopup(const Sender: TObject); virtual;
+    procedure DoPopupMulti(const Sender: TObject); virtual;
+    procedure DoControlPaint(const Sender: TObject; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
+    procedure DoControlPaintBkgnd(const Sender: TObject; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState; var TargetStdPaint: Boolean); virtual;
     procedure Loaded; override;
     procedure Resize; override;
     procedure CalcRowsCols; virtual;
@@ -246,8 +250,6 @@ type
     procedure DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
 //    function CompareStrings(const S1, S2: String): Integer; virtual;
     procedure WndProc(var Message: TMessage); override;
-    //
-    property SelectedControls: TObjectList read FSelectedControls; // ugly shortcut - to be refactored later
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -255,8 +257,9 @@ type
     procedure AfterConstruction; override;
     procedure ClearSelection(const Update: Boolean = False);
     procedure SelectAll;
-    function IndexOfTileControl(const Control: TCustomTileControl): Integer; inline;
-    function IndexOfPopup(const Sender: TObject): Integer;
+    function IndexOf(const Control: TCustomTileControl): Integer; inline;
+    function IndexOfPopup(const Sender: TObject): Integer; inline;
+    function IndexOfSelected(const Control: TCustomTileControl): Integer; inline;
     procedure UpdateTiles;
 
     function AddTile(const Size: TTileSize = tsRegular): TTileControl;
@@ -1468,16 +1471,6 @@ begin
   if Message.Inserting and (Message.Control <> Nil) and (Message.Control is TCustomTileControl) then begin
     TCustomTileControl(Message.Control).Align:=alNone;
     TCustomTileControl(Message.Control).Anchors:=[];
-{
-    TCustomTileControl(Message.Control).OnClick:=ControlClick;
-    TCustomTileControl(Message.Control).OnDblClick:=ControlDblClick;
-    TCustomTileControl(Message.Control).OnPaint:=ControlPaint;
-    TCustomTileControl(Message.Control).OnMouseDown:=ControlMouseDown;
-    TCustomTileControl(Message.Control).OnMouseMove:=ControlMouseMove;
-    TCustomTileControl(Message.Control).OnMouseUp:=ControlMouseUp;
-    TCustomTileControl(Message.Control).OnMouseEnter:=ControlMouseEnter;
-    TCustomTileControl(Message.Control).OnMouseLeave:=ControlMouseLeave;
-}
     //
     if not (csLoading in Owner.ComponentState){ and not (csDesigning in Owner.ComponentState)} then
       FControlsCollection.AddTileControl(TCustomTileControl(Message.Control));
@@ -1488,16 +1481,6 @@ procedure TTileBox.CMControlChange(var Message: TCMControlChange);
 begin
   inherited;
   if not Message.Inserting and (Message.Control <> Nil) and (Message.Control is TCustomTileControl) and (Message.Control.Parent = Self) then begin
-{
-    TCustomTileControl(Message.Control).OnClick:=Nil;
-    TCustomTileControl(Message.Control).OnDblClick:=Nil;
-    TCustomTileControl(Message.Control).OnPaint:=Nil;
-    TCustomTileControl(Message.Control).OnMouseDown:=Nil;
-    TCustomTileControl(Message.Control).OnMouseMove:=Nil;
-    TCustomTileControl(Message.Control).OnMouseUp:=Nil;
-    TCustomTileControl(Message.Control).OnMouseEnter:=Nil;
-    TCustomTileControl(Message.Control).OnMouseLeave:=Nil;
-}
     FControlsCollection.RemoveTileControl(TCustomTileControl(Message.Control));
   end;
 end;
@@ -1746,6 +1729,12 @@ begin
 //
 end;
 
+procedure TTileBox.Loaded;
+begin
+  inherited;
+  UpdateControlsCollectionIndexes;
+end;
+
 procedure TTileBox.DoClick;
 begin
   if Assigned(FOnControlClick) then
@@ -1756,6 +1745,30 @@ procedure TTileBox.DoDblClick;
 begin
   if Assigned(FOnControlDblClick) then
     FOnControlDblClick(Self, ActiveControl, TileControlIndex);
+end;
+
+procedure TTileBox.DoPopup(const Sender: TObject);
+begin
+  if Assigned(FOnPopup) then
+    FOnPopup(Sender);
+end;
+
+procedure TTileBox.DoPopupMulti(const Sender: TObject);
+begin
+  if Assigned(FOnPopupMulti) then
+    FOnPopupMulti(Sender);
+end;
+
+procedure TTileBox.DoControlPaint(const Sender: TObject; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState);
+begin
+  if Assigned(FControlPaint) then
+    FControlPaint(Sender, TargetCanvas, TargetRect, TargetState);
+end;
+
+procedure TTileBox.DoControlPaintBkgnd(const Sender: TObject; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState; var TargetStdPaint: Boolean);
+begin
+  if Assigned(FControlPaintBkgnd) then
+    FControlPaintBkgnd(Sender, TargetCanvas, TargetRect, TargetState, TargetStdPaint);
 end;
 
 procedure TTileBox.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
@@ -2420,7 +2433,7 @@ begin
       Result:=cdsFocused;
   end
   else begin
-    if Self.IndexOfTileControl(Tile) >= 0 then begin
+    if Self.IndexOf(Tile) >= 0 then begin
       Result:=cdsSelected;
       if Index = FControlIndex then
         Result:=cdsSelFocused;
@@ -2448,7 +2461,7 @@ begin
   end;
 end;
 
-function TTileBox.IndexOfTileControl(const Control: TCustomTileControl): Integer;
+function TTileBox.IndexOf(const Control: TCustomTileControl): Integer;
 var
   i: Integer;
   Tile: TTileControl;
@@ -2466,12 +2479,6 @@ begin
   end;
 end;
 
-procedure TTileBox.Loaded;
-begin
-  inherited;
-  UpdateControlsCollectionIndexes;
-end;
-
 function TTileBox.IndexOfPopup(const Sender: TObject): Integer;
 var
   Popup: TPopupMenu;
@@ -2485,6 +2492,11 @@ begin
   end;
 
   Result:=-1;
+end;
+
+function TTileBox.IndexOfSelected(const Control: TCustomTileControl): Integer;
+begin
+  Result:=FSelectedControls.IndexOf(Control);
 end;
 
 procedure TTileBox.MakeVisible(const Bounds: TRect);

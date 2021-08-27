@@ -136,7 +136,6 @@ type
     FLMouseClicked: Boolean;
     FNowDragging: Boolean;
     FControlsCollectionIndex: Integer;
-    FControlEvents: TTileControlEvents;
 
     procedure SetAlignment(Value: TAlignment);
     procedure SetVerticalAlignment(const Value: TVerticalAlignment);
@@ -155,6 +154,8 @@ type
     procedure SetManualUserPosition;
     procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
     procedure CMControlListChanging(var Msg: TCMControlListChanging); message CM_CONTROLLISTCHANGING;
+    procedure CMMouseEnter(var Message: TMessage); message CM_MOUSEENTER;
+    procedure CMMouseLeave(var Message: TMessage); message CM_MOUSELEAVE;
   protected
     procedure Click; override;
     procedure DblClick; override;
@@ -526,7 +527,6 @@ begin
   FText2:=TTileText.Create(Self);
   FText3:=TTileText.Create(Self);
   FText4:=TTileText.Create(Self);
-  FControlEvents:=TTileControlEvents.Create(TWinControl(Owner), Self);
 end;
 
 destructor TCustomTileControl.Destroy;
@@ -536,19 +536,18 @@ begin
   FreeAndNil(FText2);
   FreeAndNil(FText1);
   FreeAndNil(FGlyph);
-  FreeAndNil(FControlEvents);
   inherited Destroy;
 end;
 
 procedure TCustomTileControl.Click;
 begin
-  FControlEvents.ControlClick;
+  ControlEvents.ControlClick(Parent, Self);
   inherited;
 end;
 
 procedure TCustomTileControl.DblClick;
 begin
-  FControlEvents.ControlDblClick;
+  ControlEvents.ControlDblClick(Parent, Self);
   inherited;
 end;
 
@@ -583,7 +582,7 @@ begin
     FLMouseClicked:=True;
 //    Self.BeginDrag(True);
   end;
-
+  ControlEvents.ControlMouseDown(Parent, Self, Button, Shift, X, Y);
   inherited;
 end;
 
@@ -594,6 +593,7 @@ begin
     Self.EnterDragMode;
     Self.BeginDrag(True);
   end;
+  ControlEvents.ControlMouseMove(Parent, Self, Shift, X, Y);
   inherited;
 end;
 
@@ -601,7 +601,7 @@ procedure TCustomTileControl.MouseUp(Button: TMouseButton; Shift: TShiftState; X
 begin
   if (Button = mbLeft) and not (ssDouble in Shift) and not InDragMode then
     ClearMouseLClickInfo;
-  //
+  ControlEvents.ControlMouseUp(Parent, Self, Button, Shift, X, Y);
   inherited;
 end;
 
@@ -711,7 +711,7 @@ begin
       else
         FullRepaint;
     end;
-    FControlEvents.ControlPaint(LCanvas, Self.ClientRect);
+    ControlEvents.ControlPaint(Parent, Self, LCanvas, Self.ClientRect);
     if Assigned(FOnPaint) {and not (csDesigning in ComponentState)} then
       OnPaint(Self, LCanvas, Self.ClientRect)
   finally
@@ -892,6 +892,18 @@ begin
     Msg.ControlListItem^.Control.Parent:=Self.Parent;
     Exit;
   end;
+  inherited;
+end;
+
+procedure TCustomTileControl.CMMouseEnter(var Message: TMessage);
+begin
+  ControlEvents.ControlMouseEnter(Parent, Self);
+  inherited;
+end;
+
+procedure TCustomTileControl.CMMouseLeave(var Message: TMessage);
+begin
+  ControlEvents.ControlMouseLeave(Parent, Self);
   inherited;
 end;
 
