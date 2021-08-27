@@ -1852,9 +1852,7 @@ end;
 
 procedure TTileBox.DoEndDrag(Target: TObject; X, Y: Integer);
 begin
-  DragMode:=dmNormal;
   SharedEndDrag(Target, X, Y);
-  Color:=SavedBkgndColor;
 end;
 
 procedure TTileBox.SharedEndDrag(Target: TObject; X, Y: Integer);
@@ -1862,6 +1860,8 @@ begin
   //All draggable controls share this event handler
   FDragObject.Free;
   FDragObject:=Nil;
+  DragMode:=dmNormal;
+  Color:=SavedBkgndColor;
 end;
 
 procedure TTileBox.DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState);
