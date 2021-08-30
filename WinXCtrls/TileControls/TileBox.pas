@@ -248,6 +248,8 @@ type
     procedure CalculateControlBounds(const Index: Integer; out ControlSize: TPoint); overload; virtual;
     procedure CalculateControlBounds(const Control: TCustomTileControl; const TargetRect: TRect; out ControlSize: TPoint); overload; virtual;
     procedure DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
+    //
+    procedure MoveTilesDown(const ACol, ARow: Integer);
 //    function CompareStrings(const S1, S2: String): Integer; virtual;
     procedure WndProc(var Message: TMessage); override;
   public
@@ -1820,23 +1822,23 @@ procedure TTileBox.DragDrop(Source: TObject; X, Y: Integer);
 var
   Tile: TCustomTileControl;
   idx: Integer;
-  drop_pt: TPoint;
+  pt: TPoint;
 begin
   if Source is TTileDragObject then begin
-    drop_pt:=CalculateControlPos(Point(X, Y));
+    pt:=CalculateControlPos(Point(X, Y));
     if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
       Tile:=TCustomTileControl(TTileDragObject(Source).Control);
       //idx:=ControlsCollection.IndexOfTileControl(Tile);
       idx:=Tile.ControlsCollectionIndex;
       if idx > -1 then begin
-        if PointsEqual(drop_pt, ControlsCollection.Items[idx].GetPosition) then begin
+        if PointsEqual(pt, ControlsCollection.Items[idx].GetPosition) then begin
           ControlsCollection.Items[idx].FUserPosition:=False;
         end
         else begin
           if ControlsCollection.Items[idx].FUserPosition and ControlsCollection.Items[idx].TilePosition.AutoPositioning then
             ControlsCollection.Items[idx].TilePosition.AutoPositioning:=False;
         end;
-        ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
+        ControlsCollection.Items[idx].SetPosition(pt.X, pt.Y);
         UpdateControls(True);
       end;
     end;
@@ -2415,6 +2417,11 @@ begin
     //  Unlock;
     //end;
   end;
+end;
+
+procedure TTileBox.MoveTilesDown(const ACol, ARow: Integer);
+begin
+
 end;
 
 function TTileBox.GetTileControl(Index: Integer): TTileControl;

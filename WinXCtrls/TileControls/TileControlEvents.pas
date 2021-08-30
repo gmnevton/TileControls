@@ -12,17 +12,32 @@ uses
 type
   TTileControlEvents = class
   public
-    procedure ControlClick(const ATileBox: TWinControl; const ATileControl: TControl);
-    procedure ControlDblClick(const ATileBox: TWinControl; const ATileControl: TControl);
+    procedure ControlClick(const ATileBox: TWinControl; const ATileControl: TControl); virtual;
+    procedure ControlDblClick(const ATileBox: TWinControl; const ATileControl: TControl); virtual;
     //
-    procedure ControlMouseDown(const ATileBox: TWinControl; const ATileControl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseEnter(const ATileBox: TWinControl; const ATileControl: TControl);
-    procedure ControlMouseLeave(const ATileBox: TWinControl; const ATileControl: TControl);
-    procedure ControlMouseMove(const ATileBox: TWinControl; const ATileControl: TControl; Shift: TShiftState; X, Y: Integer);
-    procedure ControlMouseUp(const ATileBox: TWinControl; const ATileControl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ControlMouseDown(const ATileBox: TWinControl; const ATileControl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
+    procedure ControlMouseEnter(const ATileBox: TWinControl; const ATileControl: TControl); virtual;
+    procedure ControlMouseLeave(const ATileBox: TWinControl; const ATileControl: TControl); virtual;
+    procedure ControlMouseMove(const ATileBox: TWinControl; const ATileControl: TControl; Shift: TShiftState; X, Y: Integer); virtual;
+    procedure ControlMouseUp(const ATileBox: TWinControl; const ATileControl: TControl; Button: TMouseButton; Shift: TShiftState; X, Y: Integer); virtual;
     //
-    procedure ControlPaint(const ATileBox: TWinControl; const ATileControl: TControl; TargetCanvas: TCanvas; TargetRect: TRect);
+    procedure ControlStartDrag(const ATileBox: TWinControl; const ATileControl: TControl; var DragObject: TDragObject); virtual;
+    procedure ControlEndDrag(const ATileBox: TWinControl; const ATileControl: TControl; Target: TObject; X, Y: Integer); virtual;
+    procedure ControlDragOver(const ATileBox: TWinControl; const ATileControl: TControl; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); virtual;
+    procedure ControlDragDrop(const ATileBox: TWinControl; const ATileControl: TControl; Source: TObject; X, Y: Integer); virtual;
+    //
+    procedure ControlPaint(const ATileBox: TWinControl; const ATileControl: TControl; TargetCanvas: TCanvas; TargetRect: TRect); virtual;
   end;
+
+  TTileControlEventsClass = class of TTileControlEvents;
+
+//  TTileControlEventsObject = class
+//  public
+//    class function GetTileControlEventsClass: TTileControlEventsClass; virtual;
+//  end;
+
+const
+  DefaultControlEventsClass: TTileControlEventsClass = TTileControlEvents;
 
 function ControlEvents: TTileControlEvents;
 
@@ -32,10 +47,12 @@ uses
   Contnrs,
   Math,
   TileBox,
-  TileControl;
+  TileControl,
+  TileControlDrag;
 
 type
   TTileBoxAccess = class(TTileBox);
+  TCustomTileControlAccess = class(TCustomTileControl);
 
 var
   GControlEvents: TTileControlEvents;
@@ -43,7 +60,7 @@ var
 function ControlEvents: TTileControlEvents;
 begin
   if GControlEvents = Nil then
-    GControlEvents:=TTileControlEvents.Create;
+    GControlEvents:=DefaultControlEventsClass.Create;
   Result:=GControlEvents;
 end;
 
@@ -289,6 +306,52 @@ begin
         TTileBoxAccess(TileBox).DoPopup(Self);
     end;
   end;
+end;
+
+procedure TTileControlEvents.ControlStartDrag(const ATileBox: TWinControl; const ATileControl: TControl; var DragObject: TDragObject);
+var
+  pt: TPoint;
+begin
+  //Get cursor pos
+  pt:=Mouse.CursorPos;
+  //Make cursor pos relative to button
+  pt:=ATileControl.ScreenToClient(pt);
+  //Pass info to drag object
+  DragObject:=TTileDragObject.CreateWithHotSpot(ATileControl, pt.X, pt.Y);
+  //Modify the var parameter
+  TTileBoxAccess(ATileBox).FDragObject:=TTileDragObject(DragObject);
+//  SetManualUserPosition;
+end;
+
+procedure TTileControlEvents.ControlEndDrag(const ATileBox: TWinControl; const ATileControl: TControl; Target: TObject; X, Y: Integer);
+begin
+  TCustomTileControlAccess(ATileControl).LeaveDragMode;
+  TTileBoxAccess(ATileBox).SharedEndDrag(Target, X, Y);
+end;
+
+procedure TTileControlEvents.ControlDragOver(const ATileBox: TWinControl; const ATileControl: TControl; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+var
+  Tile: TCustomTileControl;
+  idx: Integer;
+  pt: TPoint;
+begin
+  Accept:=(Source is TTileDragObject);
+  if Accept and (State = dsDragMove) then begin
+//    pt:=TTileBoxAccess(Parent).CalculateControlPos(Point(X, Y));
+//    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
+//      Tile:=TCustomTileControl(TTileDragObject(Source).Control);
+//      idx:=TTileBoxAccess(Parent).ControlsCollection.ControlIndex(Tile);
+//      if idx > -1 then begin
+//        TTileBoxAccess(Parent).ControlsCollection.Items[idx].SetPosition(pt.X, pt.Y);
+//        TTileBoxAccess(Parent).UpdateControls(True);
+//      end;
+//    end;
+  end;
+end;
+
+procedure TTileControlEvents.ControlDragDrop(const ATileBox: TWinControl; const ATileControl: TControl; Source: TObject; X, Y: Integer);
+begin
+
 end;
 
 procedure TTileControlEvents.ControlPaint(const ATileBox: TWinControl; const ATileControl: TControl; TargetCanvas: TCanvas; TargetRect: TRect);

@@ -166,9 +166,10 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;  MousePos: TPoint): Boolean; override;
-    procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
     procedure DoStartDrag(var DragObject: TDragObject); override;
     procedure DoEndDrag(Target: TObject; X, Y: Integer); override;
+    procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
+    procedure DragDrop(Source: TObject; X, Y: Integer); override;
     procedure Paint; override;
     procedure PaintTo(DC: HDC; X, Y: Integer); overload;
     procedure PaintTo(Canvas: TCanvas; X, Y: Integer); overload;
@@ -224,8 +225,7 @@ uses
   Forms,
   Math,
   TileTypes,
-  TileBox,
-  TileControlDrag;
+  TileBox;
 
 type
   TTileBoxAccess = class(TTileBox);
@@ -622,45 +622,24 @@ begin
     Parent.Perform(WM_VSCROLL, IfThen(IsNeg, SB_LINEDOWN, SB_LINEUP), 0);
 end;
 
-procedure TCustomTileControl.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
-var
-  Tile: TCustomTileControl;
-  idx: Integer;
-  drop_pt: TPoint;
-begin
-  Accept:=(Source is TTileDragObject);
-  if Accept and (State = dsDragMove) then begin
-    drop_pt:=TTileBoxAccess(Parent).CalculateControlPos(Point(X, Y));
-    if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
-      Tile:=TCustomTileControl(TTileDragObject(Source).Control);
-      idx:=TTileBoxAccess(Parent).ControlsCollection.ControlIndex(Tile);
-      if idx > -1 then begin
-        TTileBoxAccess(Parent).ControlsCollection.Items[idx].SetPosition(drop_pt.X, drop_pt.Y);
-        TTileBoxAccess(Parent).UpdateControls(True);
-      end;
-    end;
-  end;
-end;
-
 procedure TCustomTileControl.DoStartDrag(var DragObject: TDragObject);
-var
-  Pt: TPoint;
 begin
-  //Get cursor pos
-  GetCursorPos(Pt);
-  //Make cursor pos relative to button
-  Pt:=Self.ScreenToClient(Pt);
-  //Pass info to drag object
-  DragObject:=TTileDragObject.CreateWithHotSpot(Self, Pt.X, Pt.Y);
-  //Modify the var parameter
-  TTileBoxAccess(Parent).FDragObject:=TTileDragObject(DragObject);
-  SetManualUserPosition;
+  ControlEvents.ControlStartDrag(Parent, Self, DragObject);
 end;
 
 procedure TCustomTileControl.DoEndDrag(Target: TObject; X, Y: Integer);
 begin
-  Self.LeaveDragMode;
-  TTileBoxAccess(Parent).SharedEndDrag(Target, X, Y);
+  ControlEvents.ControlEndDrag(Parent, Self, Target, X, Y);
+end;
+
+procedure TCustomTileControl.DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+begin
+  ControlEvents.ControlDragOver(Parent, Self, Source, X, Y, State, Accept);
+end;
+
+procedure TCustomTileControl.DragDrop(Source: TObject; X, Y: Integer);
+begin
+  ControlEvents.ControlDragDrop(Parent, Self, Source, X, Y);
 end;
 
 procedure TCustomTileControl.Paint;
