@@ -250,7 +250,10 @@ type
     procedure CalculateControlBounds(const Control: TCustomTileControl; const TargetRect: TRect; out ControlSize: TPoint); overload; virtual;
     procedure DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
     //
-    procedure MoveTiles(const SourceRect: TRect);
+    procedure MoveTiles(const SourceRect: TRect); virtual;
+    procedure MoveTile(const Control: TCustomTileControl; const ColidingRect: TRect); virtual;
+    function  CanMoveVertically(const Control: TCustomTileControl; const how_much_cells: Integer): Boolean; virtual;
+    function  CanMoveHorizontally(const Control: TCustomTileControl; const how_much_cells: Integer): Boolean; virtual;
 //    function CompareStrings(const S1, S2: String): Integer; virtual;
     procedure WndProc(var Message: TMessage); override;
   public
@@ -1823,17 +1826,6 @@ begin
 //        OutputDebugString(PChar(Format('top/left: %d/%d; bottom/right: %d/%d', [R.Top, R.Left, R.Bottom, R.Right])));
         MoveTiles(R);
       end;
-{
-      pt:=CalculateControlPos(Point(X, Y));
-      if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
-        //idx:=ControlsCollection.IndexOfTileControl(Tile);
-        idx:=Tile.ControlsCollectionIndex;
-        if idx > -1 then begin
-          ControlsCollection.Items[idx].SetPosition(pt.X, pt.Y);
-          UpdateControls(True);
-        end;
-      end;
-}
     end
     else if State = dsDragLeave then begin
       // we can't relay on (X, Y) values from parameters, because they are control related only, and we need to know where we are relative to whole screen
@@ -2452,11 +2444,53 @@ end;
 
 procedure TTileBox.MoveTiles(const SourceRect: TRect);
 var
-  i: Integer;
+  i, idx: Integer;
+  Tile: TTileControl;
 begin
   for i:=0 to GetControlsCount - 1 do begin
-
+    Tile:=GetTileControl(i);
+//      pt:=CalculateControlPos(Point(X, Y));
+    idx:=Tile.ControlsCollectionIndex;
+    if (idx > -1) and PtInRect(SourceRect, ControlsCollection.Items[idx].GetPosition) then begin
+      MoveTile(Tile, SourceRect);
+      UpdateControls(True);
+      Exit;
+    end;
   end;
+end;
+
+procedure TTileBox.MoveTile(const Control: TCustomTileControl; const ColidingRect: TRect);
+var
+  control_pos: TPoint;
+//  control_rect: TRect;
+  cells: Integer;
+begin
+  if not Assigned(Control) then
+    Exit;
+  //
+  control_pos:=ControlsCollection.Items[Control.ControlsCollectionIndex].GetPosition;
+//  control_rect.:=
+  while True do begin
+    cells:=1;
+    if CanMoveVertically(Control, cells) then begin
+
+    end
+    else if CanMoveHorizontally(Control, cells) then begin
+
+    end
+    else
+      Break;
+  end;
+end;
+
+function TTileBox.CanMoveVertically(const Control: TCustomTileControl; const how_much_cells: Integer): Boolean;
+begin
+
+end;
+
+function TTileBox.CanMoveHorizontally(const Control: TCustomTileControl; const how_much_cells: Integer): Boolean;
+begin
+
 end;
 
 function TTileBox.GetTileControl(Index: Integer): TTileControl;
