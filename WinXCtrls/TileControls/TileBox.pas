@@ -239,6 +239,7 @@ type
     procedure Resize; override;
     procedure CalcRowsCols; virtual;
     function  cellsToSize(const cels, spacer: Integer): Integer; inline;
+    function  posToCell(const X, Y: Integer): TPoint; inline;
     procedure MakeVisible(const Bounds: TRect); virtual;
     procedure UpdateControl(const Index: Integer); virtual;
     procedure UpdateControls(const Rebuild: Boolean); virtual;
@@ -249,7 +250,7 @@ type
     procedure CalculateControlBounds(const Control: TCustomTileControl; const TargetRect: TRect; out ControlSize: TPoint); overload; virtual;
     procedure DrawControl(const TargetControl: TTileControl; const TargetCanvas: TCanvas; const TargetRect: TRect; const TargetState: TTileControlDrawState); virtual;
     //
-    procedure MoveTilesDown(const ACol, ARow: Integer);
+    procedure MoveTiles(const SourceRect: TRect);
 //    function CompareStrings(const S1, S2: String): Integer; virtual;
     procedure WndProc(var Message: TMessage); override;
   public
@@ -1180,8 +1181,7 @@ var
   dx, dy: Integer;
 begin
   ClientPoint:=PointsAdd(FromPoint, Point(-IndentHorz, -IndentVert));
-  ClientPoint.X:=Abs(ClientPoint.X);
-  ClientPoint.Y:=Abs(ClientPoint.Y);
+  ClientPoint:=PointsAbs(ClientPoint);
   dx:=ClientPoint.X div 48;
   if dx > 0 then
     Dec(dx);
@@ -1371,6 +1371,16 @@ end;
 function TTileBox.cellsToSize(const cels, spacer: Integer): Integer;
 begin
   Result:=(48 + spacer) * cels;
+end;
+
+function TTileBox.posToCell(const X, Y: Integer): TPoint;
+begin
+  Result:=Point(X, Y);
+  Result:=PointsAdd(Result, Point(-IndentHorz, -IndentVert));
+  Result.X:=Result.X div (48 + Spacer);
+  Result.Y:=Result.Y div (48 + Spacer);
+  Result.X:=Min(Max(0, Result.X), ColCount);
+  Result.Y:=Min(Max(0, Result.Y), RowCount);
 end;
 
 procedure TTileBox.CalcScrollBar(const ScrollBar: TControlScrollBar);
@@ -1778,6 +1788,7 @@ var
   Tile: TCustomTileControl;
   idx: Integer;
   pt: TPoint;
+  R: TRect;
 begin
   Accept:=(Source is TTileBox) or (Source is TCustomTileControl) or (Source is TTileDragObject);
   if Accept then begin
@@ -1791,10 +1802,30 @@ begin
     else if State = dsDragMove then begin
       // here we have logic to move out columns or rows of Tiles from underneath of our dragging Tile
       // this will be done in the future updates
+      Tile:=TCustomTileControl(TTileDragObject(Source).Control);
+      if (Tile <> Nil) and (Tile is TCustomTileControl) then begin
+        // calculate relative position of dragged object in grid coordinates
+        pt:=Point(X, Y);
+        pt:=PointsDec(pt, TTileDragObject(Source).TopLeftOffset);
+        pt:=posToCell(pt.X, pt.Y);
+        pt.X:=Min(Max(0, pt.X), ColCount);
+        pt.Y:=Min(Max(0, pt.Y), RowCount);
+        R.TopLeft:=pt;
+          //
+        pt:=Point(X, Y);
+        pt:=PointsDec(pt, TTileDragObject(Source).TopLeftOffset);
+        pt:=PointsAdd(pt, Point(TTileDragObject(Source).ControlRect.Width, TTileDragObject(Source).ControlRect.Height));
+        pt:=posToCell(pt.X, pt.Y);
+        pt.X:=Min(Max(0, pt.X), ColCount);
+        pt.Y:=Min(Max(0, pt.Y), RowCount);
+        R.BottomRight:=pt;
+        //
+//        OutputDebugString(PChar(Format('top/left: %d/%d; bottom/right: %d/%d', [R.Top, R.Left, R.Bottom, R.Right])));
+        MoveTiles(R);
+      end;
 {
       pt:=CalculateControlPos(Point(X, Y));
       if (TTileDragObject(Source).Control <> Nil) and (TTileDragObject(Source).Control is TCustomTileControl) then begin
-        Tile:=TCustomTileControl(TTileDragObject(Source).Control);
         //idx:=ControlsCollection.IndexOfTileControl(Tile);
         idx:=Tile.ControlsCollectionIndex;
         if idx > -1 then begin
@@ -2419,9 +2450,13 @@ begin
   end;
 end;
 
-procedure TTileBox.MoveTilesDown(const ACol, ARow: Integer);
+procedure TTileBox.MoveTiles(const SourceRect: TRect);
+var
+  i: Integer;
 begin
+  for i:=0 to GetControlsCount - 1 do begin
 
+  end;
 end;
 
 function TTileBox.GetTileControl(Index: Integer): TTileControl;

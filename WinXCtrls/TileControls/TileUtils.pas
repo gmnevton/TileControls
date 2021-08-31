@@ -8,6 +8,7 @@ uses
 
 function PointsAdd(const A, B: TPoint): TPoint; inline;
 function PointsDec(const A, B: TPoint): TPoint; inline;
+function PointsAbs(const P: TPoint): TPoint; inline;
 
 function GetTickDiff(const AOldTickCount, ANewTickCount: LongWord): LongWord; inline;
 
@@ -23,6 +24,12 @@ end;
 function PointsDec(const A, B: TPoint): TPoint;
 begin
   Result:=Point(A.X - B.X, A.Y - B.Y);
+end;
+
+function PointsAbs(const P: TPoint): TPoint;
+begin
+  Result.X:=Abs(P.X);
+  Result.Y:=Abs(P.Y);
 end;
 
 function GetTickDiff(const AOldTickCount, ANewTickCount: LongWord): LongWord;
