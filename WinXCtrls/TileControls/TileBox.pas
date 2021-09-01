@@ -2485,6 +2485,8 @@ end;
 
 function TTileBox.CanMoveVertically(const Control: TCustomTileControl; const how_much_cells: Integer): Boolean;
 begin
+  Result:=False;
+
 
 end;
 
